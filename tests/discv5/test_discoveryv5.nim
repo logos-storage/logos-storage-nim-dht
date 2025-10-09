@@ -2,10 +2,15 @@
 
 import
   std/tables,
-  chronos, chronicles, stint, asynctest/chronos/unittest, 
-  stew/byteutils, bearssl/rand,
+  chronos,
+  chronicles,
+  stint,
+  asynctest/chronos/unittest,
+  stew/byteutils,
+  bearssl/rand,
   libp2p/crypto/crypto,
-  codexdht/discv5/[transport, spr, node, routing_table, encoding, sessions, nodes_verification],
+  codexdht/discv5/
+    [transport, spr, node, routing_table, encoding, sessions, nodes_verification],
   codexdht/discv5/crypto as dhtcrypto,
   codexdht/discv5/protocol as discv5_protocol,
   ../dht/test_helper
@@ -22,13 +27,13 @@ suite "Discovery v5 Tests":
       pk = PrivateKey.example(rng)
       targetPk = PrivateKey.example(rng)
       node = initDiscoveryNode(rng, pk, localAddress(20302))
-      targetNode = targetPk.generateNode(port=26302)
+      targetNode = targetPk.generateNode(port = 26302)
 
     check node.addNode(targetNode)
 
-    for i in 0..<1000:
+    for i in 0 ..< 1000:
       let pk = PrivateKey.example(rng)
-      discard node.addNode(pk.generateNode(port=27302+i))
+      discard node.addNode(pk.generateNode(port = 27302 + i))
 
     let n = node.getNode(targetNode.id)
     check n.isSome()
@@ -39,14 +44,13 @@ suite "Discovery v5 Tests":
   test "Node deletion":
     let
       pkBootnode = PrivateKey.example(rng)
-      bootnode = initDiscoveryNode(
-        rng, PrivateKey.example(rng), localAddress(20301))
+      bootnode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20301))
       node1 = initDiscoveryNode(
-        rng, PrivateKey.example(rng), localAddress(20302),
-        @[bootnode.localNode.record])
+        rng, PrivateKey.example(rng), localAddress(20302), @[bootnode.localNode.record]
+      )
       node2 = initDiscoveryNode(
-        rng, PrivateKey.example(rng), localAddress(20303),
-        @[bootnode.localNode.record])
+        rng, PrivateKey.example(rng), localAddress(20303), @[bootnode.localNode.record]
+      )
       pong1 = await discv5_protocol.ping(node1, bootnode.localNode)
       pong2 = await discv5_protocol.ping(node1, node2.localNode)
 
@@ -83,7 +87,7 @@ suite "Discovery v5 Tests":
         ("0x0100", 9'u16),
         ("0x01ff", 9'u16),
         ("0x8000", 16'u16),
-        ("0xffff", 16'u16)
+        ("0xffff", 16'u16),
       ]
 
     for (id, d) in testValues:
@@ -93,20 +97,17 @@ suite "Discovery v5 Tests":
     # Values for this test are taken from
     # https://github.com/ethereum/go-ethereum/blob/d8ff53dfb8a516f47db37dbc7fd7ad18a1e8a125/p2p/discover/v4_lookup_test.go#L176
     const
-      targetKey = "045d485bdcbe9bc89314a10ae9231e429d33853e3a8fa2af39f5f827370a2e4185e344ace5d16237491dad41f278f1d3785210d29ace76cd627b9147ee340b1125"
+      targetKey =
+        "045d485bdcbe9bc89314a10ae9231e429d33853e3a8fa2af39f5f827370a2e4185e344ace5d16237491dad41f278f1d3785210d29ace76cd627b9147ee340b1125"
       testValues = [
         ("14a98db9b46a831d67eff29f3b85b1b485bb12ae9796aea98d91be3dc78d8a91", 248'u16),
-
         ("29738ba0c1a4397d6a65f292eee07f02df8e58d41594ba2be3cf84ce0fc58169", 252'u16),
         ("dec742079ec00ff4ec1284d7905bc3de2366f67a0769431fd16f80fd68c58a7c", 252'u16),
-
         ("ce1435a956a98ffec484cd11489c4f165cf1606819ab6b521cee440f0c677e9e", 253'u16),
         ("120260dce739b6f71f171da6f65bc361b5fad51db74cf02d3e973347819a6518", 253'u16),
-
         ("a30599b12827b69120633f15b98a7f6bc9fc2e9a0fd6ae2ebb767c0e64d743ab", 254'u16),
         ("8c5b422155d33ea8e9d46f71d1ad3e7b24cb40051413ffa1a81cff613d243ba9", 254'u16),
         ("996e7f8d1638be92d7328b4770f47e5420fc4bafecb4324fd33b1f5d9f403a75", 254'u16),
-
         ("d09e5eaeec0fd596236faed210e55ef45112409a5aa7f3276d26646080dcfaeb", 255'u16),
         ("6cfbd7b8503073fc3dbdb746a7c672571648d3bd15197ccf7f7fef3d904f53a2", 255'u16),
         ("9ae91101d6b5048607f41ec0f690ef5d09507928aded2410aabd9237aa2727d7", 255'u16),
@@ -116,7 +117,6 @@ suite "Discovery v5 Tests":
         ("1fa56cf25d4b46c2bf94e82355aa631717b63190785ac6bae545a88aadc304a9", 255'u16),
         ("3c38c503c0376f9b4adcbe935d5f4b890391741c764f61b03cd4d0d42deae002", 255'u16),
         ("3a54af3e9fa162bc8623cdf3e5d9b70bf30ade1d54cc3abea8659aba6cff471f", 255'u16),
-
         ("511b1686e4e58a917f7f848e9bf5539d206a68f5ad6b54b552c2399fe7d174ae", 256'u16),
         ("c1e20dbbf0d530e50573bd0a260b32ec15eb9190032b4633d44834afc8afe578", 256'u16),
         ("ed5f38f5702d92d306143e5d9154fb21819777da39af325ea359f453d179e80b", 256'u16),
@@ -138,7 +138,7 @@ suite "Discovery v5 Tests":
         ("d269609743ef29d6446e3355ec647e38d919c82a4eb5837e442efd7f4218944f", 256'u16),
         ("937b1af801def4e8f5a3a8bd225a8bcff1db764e41d3e177f2e9376e8dd87233", 256'u16),
         ("6799a02ea1999aefdcbcc4d3ff9544478be7365a328d0d0f37c26bd95ade0cda", 256'u16),
-        ("e24a7bc9051058f918646b0f6e3d16884b2a55a15553b89bab910d55ebc36116", 256'u16)
+        ("e24a7bc9051058f918646b0f6e3d16884b2a55a15553b89bab910d55ebc36116", 256'u16),
       ]
 
     let
@@ -163,7 +163,7 @@ suite "Discovery v5 Tests":
         ("0x0008", 4'u16),
         ("0x0080", 8'u16),
         ("0x0100", 9'u16),
-        ("0x8000", 16'u16)
+        ("0x8000", 16'u16),
       ]
 
     for (id, d) in testValues:
@@ -171,14 +171,15 @@ suite "Discovery v5 Tests":
 
   test "Distance to id check with keys":
     const
-      targetKey = "045d485bdcbe9bc89314a10ae9231e429d33853e3a8fa2af39f5f827370a2e4185e344ace5d16237491dad41f278f1d3785210d29ace76cd627b9147ee340b1125"
+      targetKey =
+        "045d485bdcbe9bc89314a10ae9231e429d33853e3a8fa2af39f5f827370a2e4185e344ace5d16237491dad41f278f1d3785210d29ace76cd627b9147ee340b1125"
       testValues = [ # possible id in that distance range
         ("cd2c707bdcbdf5109c66de68e8f26adec1527d075e0f93df0ad21c72e98b7a4d", 251'u16),
         ("c12c707bdcbdf5109c66de68e8f26adec1527d075e0f93df0ad21c72e98b7a4d", 252'u16),
         ("d92c707bdcbdf5109c66de68e8f26adec1527d075e0f93df0ad21c72e98b7a4d", 253'u16),
         ("e92c707bdcbdf5109c66de68e8f26adec1527d075e0f93df0ad21c72e98b7a4d", 254'u16),
         ("892c707bdcbdf5109c66de68e8f26adec1527d075e0f93df0ad21c72e98b7a4d", 255'u16),
-        ("492c707bdcbdf5109c66de68e8f26adec1527d075e0f93df0ad21c72e98b7a4d", 256'u16)
+        ("492c707bdcbdf5109c66de68e8f26adec1527d075e0f93df0ad21c72e98b7a4d", 256'u16),
       ]
 
     let
@@ -191,11 +192,11 @@ suite "Discovery v5 Tests":
   test "FindNode Test":
     const dist = 253'u16
     let
-      mainNodeKey = PrivateKey.fromHex(
-        "a2b50376a79b1a8c8a3296485572bdfbf54708bb46d3c25d73d2723aaaf6a617")
+      mainNodeKey = PrivateKey
+        .fromHex("a2b50376a79b1a8c8a3296485572bdfbf54708bb46d3c25d73d2723aaaf6a617")
         .expect("Valid private key hex")
-      testNodeKey = PrivateKey.fromHex(
-        "a2b50376a79b1a8c8a3296485572bdfbf54708bb46d3c25d73d2723aaaf6a618")
+      testNodeKey = PrivateKey
+        .fromHex("a2b50376a79b1a8c8a3296485572bdfbf54708bb46d3c25d73d2723aaaf6a618")
         .expect("Valid private key hex")
       mainNode = initDiscoveryNode(rng, mainNodeKey, localAddress(20301))
       testNode = initDiscoveryNode(rng, testNodeKey, localAddress(20302))
@@ -210,38 +211,33 @@ suite "Discovery v5 Tests":
     check (await mainNode.ping(testNode.localNode)).isOk()
 
     # Get SPR of the node itself
-    var discovered =
-      await findNode(testNode, mainNode.localNode, @[0'u16])
+    var discovered = await findNode(testNode, mainNode.localNode, @[0'u16])
     check:
       discovered.isOk
       discovered[].len == 1
       discovered[][0] == mainNode.localNode
     # Get SPRs of nodes added at provided logarithmic distance
-    discovered =
-      await findNode(testNode, mainNode.localNode, @[dist])
+    discovered = await findNode(testNode, mainNode.localNode, @[dist])
     check discovered.isOk
     check discovered[].len == 10
     for n in nodes:
       check discovered[].contains(n)
 
     # Too high logarithmic distance, should return no nodes.
-    discovered =
-      await findNode(testNode, mainNode.localNode, @[high(uint16)])
+    discovered = await findNode(testNode, mainNode.localNode, @[high(uint16)])
     check:
       discovered.isOk
       discovered[].len == 0
 
     # Logarithmic distance of 256 should only return the testNode
-    discovered =
-      await findNode(testNode, mainNode.localNode, @[256'u16])
+    discovered = await findNode(testNode, mainNode.localNode, @[256'u16])
     check:
       discovered.isOk
       discovered[].len == 1
       discovered[][0] == testNode.localNode
 
     # Empty bucket
-    discovered =
-      await findNode(testNode, mainNode.localNode, @[254'u16])
+    discovered = await findNode(testNode, mainNode.localNode, @[254'u16])
     check discovered.isOk
     check discovered[].len == 0
 
@@ -250,8 +246,7 @@ suite "Discovery v5 Tests":
       discard mainNode.addSeenNode(n) # for testing only!
 
     # Full bucket
-    discovered =
-      await findNode(testNode, mainNode.localNode, @[dist])
+    discovered = await findNode(testNode, mainNode.localNode, @[dist])
     check discovered.isOk
     check discovered[].len == 16
 
@@ -259,27 +254,26 @@ suite "Discovery v5 Tests":
     await testNode.closeWait()
 
   test "FindNode with test table":
-
-    let mainNode =
-      initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20301))
+    let mainNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20301))
 
     # Generate 1000 random nodes and add to our main node's routing table
-    for i in 0..<1000:
-      discard mainNode.addSeenNode(generateNode(PrivateKey.example(rng), port=28302+i)) # for testing only!
+    for i in 0 ..< 1000:
+      discard mainNode.addSeenNode(
+        generateNode(PrivateKey.example(rng), port = 28302 + i)
+      ) # for testing only!
 
     let
       neighbours = mainNode.neighbours(mainNode.localNode.id)
       closest = neighbours[0]
       closestDistance = logDistance(closest.id, mainNode.localNode.id)
 
-    debug "Closest neighbour", closestDistance, id=closest.id.toHex()
+    debug "Closest neighbour", closestDistance, id = closest.id.toHex()
 
     let
       testNode = initDiscoveryNode(
-        rng, PrivateKey.example(rng), localAddress(20302),
-        @[mainNode.localNode.record])
-      discovered = await findNode(testNode, mainNode.localNode,
-        @[closestDistance])
+        rng, PrivateKey.example(rng), localAddress(20302), @[mainNode.localNode.record]
+      )
+      discovered = await findNode(testNode, mainNode.localNode, @[closestDistance])
 
     check discovered.isOk
     check closest in discovered[]
@@ -288,18 +282,22 @@ suite "Discovery v5 Tests":
     await testNode.closeWait()
 
   proc testLookupTargets(fast: bool = false): Future[bool] {.async.} =
-    const
-      nodeCount = 17
+    const nodeCount = 17
 
-    let bootNode =
-      initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20301))
+    let bootNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20301))
     await bootNode.start()
 
     var nodes = newSeqOfCap[discv5_protocol.Protocol](nodeCount)
     nodes.add(bootNode)
     for i in 1 ..< nodeCount:
-      nodes.add(initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20301 + i),
-        @[bootNode.localNode.record]))
+      nodes.add(
+        initDiscoveryNode(
+          rng,
+          PrivateKey.example(rng),
+          localAddress(20301 + i),
+          @[bootNode.localNode.record],
+        )
+      )
 
     # Make sure all nodes have "seen" each other by forcing pings
     for n in nodes:
@@ -314,9 +312,10 @@ suite "Discovery v5 Tests":
     for i in 1 ..< nodeCount:
       await nodes[i].start()
 
-    for i in 0..<nodeCount-1:
+    for i in 0 ..< nodeCount - 1:
       let target = nodes[i]
-      let discovered = await nodes[nodeCount-1].lookup(target.localNode.id, fast = fast)
+      let discovered =
+        await nodes[nodeCount - 1].lookup(target.localNode.id, fast = fast)
       debug "Lookup result", target = target.localNode, discovered
       if discovered[0] != target.localNode:
         return false
@@ -334,10 +333,8 @@ suite "Discovery v5 Tests":
 
   test "Resolve target":
     let
-      mainNode =
-        initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20301))
-      lookupNode =
-        initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20302))
+      mainNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20301))
+      lookupNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20302))
       targetKey = PrivateKey.example(rng)
       targetAddress = localAddress(20303)
       targetNode = initDiscoveryNode(rng, targetKey, targetAddress)
@@ -356,20 +353,27 @@ suite "Discovery v5 Tests":
         n.isSome()
         n.get().id == targetId
         n.get().record.seqNum == targetSeqNum
-    # Node will be removed because of failed findNode request.
+
+    # Verify node is still in routing table after timeout (high reliability preserved)
+    let nodeInTable = mainNode.getNode(targetId)
+    check:
+      nodeInTable.isSome()
+      nodeInTable.get().id == targetId
+      nodeInTable.get().record.seqNum == targetSeqNum
 
     # Bring target back online, update seqNum in SPR, check if we get the
     # updated SPR.
     block:
       targetNode.open()
-      # Request the target SPR and manually add it to the routing table.
+      # Request the target SPR and manually add/update it in the routing table.
       # Ping for handshake based SPR passing will not work as our previous
       # session will still be in the LRU cache.
       let nodes = await mainNode.findNode(targetNode.localNode, @[0'u16])
       check:
         nodes.isOk()
         nodes[].len == 1
-        mainNode.addNode(nodes[][0])
+        # Add/update from findNode result - false because node already exists
+        mainNode.addNode(nodes[][0]) == false
 
       targetSeqNum.inc()
       # need to add something to get the spr sequence number incremented
@@ -387,9 +391,8 @@ suite "Discovery v5 Tests":
         n.isSome()
         n.get().id == targetId
         n.get().record.seqNum == targetSeqNum
-
-      # Add the updated version
-      discard mainNode.addNode(n.get())
+        # Add the updated version - node already exsists, just updating
+        mainNode.addNode(n.get()) == false
 
     # Update seqNum in SPR again, ping lookupNode to be added in routing table,
     # close targetNode, resolve should lookup, check if we get updated SPR.
@@ -403,6 +406,12 @@ suite "Discovery v5 Tests":
       # ping node so that it becomes "seen" and thus will be forwarded on a
       # findNode request
       check (await lookupNode.ping(targetNode.localNode)).isOk()
+
+      # lower reliability so timeout will trigger removal with 0.5 threshold
+      let existingNode = mainNode.getNode(targetId)
+      if existingNode.isSome():
+        existingNode.get().seen = 0.3 # below NoreplyRemoveThreshold (0.5)
+
       await targetNode.closeWait()
 
       check mainNode.addNode(lookupNode.localNode.record)
@@ -412,8 +421,78 @@ suite "Discovery v5 Tests":
         n.get().id == targetId
         n.get().record.seqNum == targetSeqNum
 
+    # Demonstrate seen degradation via repeated findNode failures
+    # Node was re-added by lookup with seen=1.0, now repeatedly timeout to degrade
+    block:
+      var attempt = 0
+      while true:
+        attempt.inc()
+
+        let nodeBeforeTimeout = mainNode.getNode(targetId)
+        if nodeBeforeTimeout.isNone():
+          break
+
+        discard await mainNode.findNode(nodeBeforeTimeout.get(), @[0'u16])
+
+        if attempt > 10:
+          break
+
+      # Verify node was eventually removed due to degraded reliability
+      let finalCheck = mainNode.getNode(targetId)
+      check finalCheck.isNone()
+
     await mainNode.closeWait()
     await lookupNode.closeWait()
+
+  test "FindNode timeout preserves high reliability nodes":
+    # Nodes with reliability > NoreplyRemoveThreshold are kept when no replacements available
+    let
+      mainNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20401))
+      targetNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20402))
+      targetId = targetNode.localNode.id
+
+    # add node to routing table via ping
+    check (await mainNode.ping(targetNode.localNode)).isOk()
+    check mainNode.addNode(targetNode.localNode.record)
+
+    var n = mainNode.getNode(targetId)
+    check n.isSome()
+    n.get().seen = 1.8 * discv5_protocol.NoreplyRemoveThreshold
+
+    # close node to trigger timeout
+    await targetNode.closeWait()
+
+    discard await mainNode.findNode(n.get(), @[0'u16])
+
+    # verify node still in routing table
+    n = mainNode.getNode(targetId)
+    check n.isSome()
+
+    await mainNode.closeWait()
+
+  test "FindNode timeout removes low reliability nodes":
+    # Nodes with reliability <= NoreplyRemoveThreshold are removed on timeout
+    let
+      mainNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20403))
+      targetNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20404))
+      targetId = targetNode.localNode.id
+
+    check (await mainNode.ping(targetNode.localNode)).isOk()
+    check mainNode.addNode(targetNode.localNode.record)
+
+    var n = mainNode.getNode(targetId)
+    check n.isSome()
+    n.get().seen = 0.01 * discv5_protocol.NoreplyRemoveThreshold
+
+    await targetNode.closeWait()
+
+    discard await mainNode.findNode(n.get(), @[0'u16])
+
+    # verify node removed from routing table
+    n = mainNode.getNode(targetId)
+    check n.isNone()
+
+    await mainNode.closeWait()
 
   test "Random nodes, also with filter":
     let
@@ -429,11 +508,18 @@ suite "Discovery v5 Tests":
 
     let discovered = lookupNode.randomNodes(10)
     check discovered.len == 3
-    let discoveredFiltered = lookupNode.randomNodes(10,
-      proc(n: Node) : bool = n.address.get.port == Port(20302))
-    check discoveredFiltered.len == 1 and discoveredFiltered.contains(targetNode.localNode)
-    let discoveredEmpty = lookupNode.randomNodes(10,
-      proc(n: Node) : bool = n.address.get.port == Port(20305))
+    let discoveredFiltered = lookupNode.randomNodes(
+      10,
+      proc(n: Node): bool =
+        n.address.get.port == Port(20302),
+    )
+    check discoveredFiltered.len == 1 and
+      discoveredFiltered.contains(targetNode.localNode)
+    let discoveredEmpty = lookupNode.randomNodes(
+      10,
+      proc(n: Node): bool =
+        n.address.get.port == Port(20305),
+    )
     check discoveredEmpty.len == 0
 
     await lookupNode.closeWait()
@@ -441,22 +527,41 @@ suite "Discovery v5 Tests":
     await otherNode.closeWait()
     await anotherNode.closeWait()
 
-
   test "New protocol with spr":
     let
       privKey = PrivateKey.example(rng)
       ip = some(parseIpAddress("127.0.0.1"))
       port = Port(20301)
-      node = newProtocol(privKey, ip, some(port), some(port), bindPort = port,
-        rng = rng)
-      noUpdatesNode = newProtocol(privKey, ip, some(port), some(port),
-        bindPort = port, rng = rng, previousRecord = some(node.getRecord()))
-      updatesNode = newProtocol(privKey, ip, some(port), some(Port(20302)),
-        bindPort = port, rng = rng,
-        previousRecord = some(noUpdatesNode.getRecord()))
-      moreUpdatesNode = newProtocol(privKey, ip, some(port), some(port),
-        bindPort = port, rng = rng, localEnrFields = {"addfield": @[byte 0]},
-        previousRecord = some(updatesNode.getRecord()))
+      node =
+        newProtocol(privKey, ip, some(port), some(port), bindPort = port, rng = rng)
+      noUpdatesNode = newProtocol(
+        privKey,
+        ip,
+        some(port),
+        some(port),
+        bindPort = port,
+        rng = rng,
+        previousRecord = some(node.getRecord()),
+      )
+      updatesNode = newProtocol(
+        privKey,
+        ip,
+        some(port),
+        some(Port(20302)),
+        bindPort = port,
+        rng = rng,
+        previousRecord = some(noUpdatesNode.getRecord()),
+      )
+      moreUpdatesNode = newProtocol(
+        privKey,
+        ip,
+        some(port),
+        some(port),
+        bindPort = port,
+        rng = rng,
+        localEnrFields = {"addfield": @[byte 0]},
+        previousRecord = some(updatesNode.getRecord()),
+      )
     check:
       node.getRecord().seqNum == 1
       noUpdatesNode.getRecord().seqNum == 1
@@ -465,16 +570,20 @@ suite "Discovery v5 Tests":
 
     # Defect (for now?) on incorrect key use
     expect ResultDefect:
-      let incorrectKeyUpdates = newProtocol(PrivateKey.example(rng),
-        ip, some(port), some(port), bindPort = port, rng = rng,
-        previousRecord = some(updatesNode.getRecord()))
+      let incorrectKeyUpdates = newProtocol(
+        PrivateKey.example(rng),
+        ip,
+        some(port),
+        some(port),
+        bindPort = port,
+        rng = rng,
+        previousRecord = some(updatesNode.getRecord()),
+      )
 
   test "Update node record with revalidate":
     let
-      mainNode =
-        initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20301))
-      testNode =
-        initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20302))
+      mainNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20301))
+      testNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20302))
       testNodeId = testNode.localNode.id
 
     check:
@@ -505,14 +614,13 @@ suite "Discovery v5 Tests":
 
   test "Update node record with handshake":
     let
-      mainNode =
-        initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20301))
-      testNode =
-        initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20302))
+      mainNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20301))
+      testNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20302))
       testNodeId = testNode.localNode.id
 
     # Add the node (from the record, so new node!) so no handshake is done yet.
-    check: mainNode.addNode(testNode.localNode.record)
+    check:
+      mainNode.addNode(testNode.localNode.record)
 
     check:
       testNode.updateRecord().isOk()
@@ -539,9 +647,13 @@ suite "Discovery v5 Tests":
   test "Verify records of nodes message":
     let
       port = Port(9000)
-      fromNoderecord = SignedPeerRecord.init(1, PrivateKey.example(rng),
+      fromNoderecord = SignedPeerRecord.init(
+        1,
+        PrivateKey.example(rng),
         some(parseIpAddress("11.12.13.14")),
-        some(port), some(port))[]
+        some(port),
+        some(port),
+      )[]
       fromNode = newNode(fromNoderecord)[]
       privKey = PrivateKey.example(rng)
       pubKey = privKey.getPublicKey.expect("Valid private key for public key")
@@ -550,10 +662,9 @@ suite "Discovery v5 Tests":
       limit = 16
 
     block: # Duplicates
-      let
-        record = SignedPeerRecord.init(
-          1, privKey, some(parseIpAddress("12.13.14.15")),
-          some(port), some(port))[]
+      let record = SignedPeerRecord.init(
+        1, privKey, some(parseIpAddress("12.13.14.15")), some(port), some(port)
+      )[]
 
       # Exact duplicates
       var records = @[record, record]
@@ -562,16 +673,16 @@ suite "Discovery v5 Tests":
 
       # Node id duplicates
       let recordSameId = SignedPeerRecord.init(
-        1, privKey, some(parseIpAddress("212.13.14.15")),
-        some(port), some(port))[]
+        1, privKey, some(parseIpAddress("212.13.14.15")), some(port), some(port)
+      )[]
       records.add(recordSameId)
       nodes = verifyNodesRecords(records, fromNode, limit, targetDistance)
       check nodes.len == 1
 
     block: # No address
       let
-        recordNoAddress = SignedPeerRecord.init(
-          1, privKey, none(IpAddress), some(port), some(port))[]
+        recordNoAddress =
+          SignedPeerRecord.init(1, privKey, none(IpAddress), some(port), some(port))[]
         records = [recordNoAddress]
         test = verifyNodesRecords(records, fromNode, limit, targetDistance)
       check test.len == 0
@@ -579,8 +690,8 @@ suite "Discovery v5 Tests":
     block: # Invalid address - site local
       let
         recordInvalidAddress = SignedPeerRecord.init(
-          1, privKey, some(parseIpAddress("10.1.2.3")),
-          some(port), some(port))[]
+          1, privKey, some(parseIpAddress("10.1.2.3")), some(port), some(port)
+        )[]
         records = [recordInvalidAddress]
         test = verifyNodesRecords(records, fromNode, limit, targetDistance)
       check test.len == 0
@@ -588,8 +699,8 @@ suite "Discovery v5 Tests":
     block: # Invalid address - loopback
       let
         recordInvalidAddress = SignedPeerRecord.init(
-          1, privKey, some(parseIpAddress("127.0.0.1")),
-          some(port), some(port))[]
+          1, privKey, some(parseIpAddress("127.0.0.1")), some(port), some(port)
+        )[]
         records = [recordInvalidAddress]
         test = verifyNodesRecords(records, fromNode, limit, targetDistance)
       check test.len == 0
@@ -597,8 +708,8 @@ suite "Discovery v5 Tests":
     block: # Invalid distance
       let
         recordInvalidDistance = SignedPeerRecord.init(
-          1, privKey, some(parseIpAddress("12.13.14.15")),
-          some(port), some(port))[]
+          1, privKey, some(parseIpAddress("12.13.14.15")), some(port), some(port)
+        )[]
         records = [recordInvalidDistance]
         test = verifyNodesRecords(records, fromNode, limit, @[0'u16])
       check test.len == 0
@@ -606,8 +717,8 @@ suite "Discovery v5 Tests":
     block: # Invalid distance but distance validation is disabled
       let
         recordInvalidDistance = SignedPeerRecord.init(
-          1, privKey, some(parseIpAddress("12.13.14.15")),
-          some(port), some(port))[]
+          1, privKey, some(parseIpAddress("12.13.14.15")), some(port), some(port)
+        )[]
         records = [recordInvalidDistance]
         test = verifyNodesRecords(records, fromNode, limit)
       check test.len == 1
@@ -623,8 +734,8 @@ suite "Discovery v5 Tests":
 
   test "Handshake cleanup: different ids":
     # Node to test the handshakes on.
-    let receiveNode = initDiscoveryNode(
-      rng, PrivateKey.example(rng), localAddress(20302))
+    let receiveNode =
+      initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20302))
 
     # Create random packets with same ip but different node ids
     # and "receive" them on receiveNode
@@ -632,14 +743,22 @@ suite "Discovery v5 Tests":
     for i in 0 ..< 5:
       let
         privKey = PrivateKey.example(rng)
-        enrRec = SignedPeerRecord.init(1, privKey,
-          some(parseIpAddress("127.0.0.1")), some(Port(9000)),
-          some(Port(9000))).expect("Properly intialized private key")
+        enrRec = SignedPeerRecord
+          .init(
+            1,
+            privKey,
+            some(parseIpAddress("127.0.0.1")),
+            some(Port(9000)),
+            some(Port(9000)),
+          )
+          .expect("Properly intialized private key")
         sendNode = newNode(enrRec).expect("Properly initialized record")
-      var codec = Codec(localNode: sendNode, privKey: privKey, sessions: Sessions.init(5))
+      var codec =
+        Codec(localNode: sendNode, privKey: privKey, sessions: Sessions.init(5))
 
-      let (packet, _, _) = encodeMessagePacket(rng[], codec,
-        receiveNode.localNode.id, receiveNode.localNode.address.get(), @[])
+      let (packet, _, _) = encodeMessagePacket(
+        rng[], codec, receiveNode.localNode.id, receiveNode.localNode.address.get(), @[]
+      )
       receiveNode.transport.receive(a, packet)
 
     # Checking different nodeIds but same address
@@ -654,22 +773,29 @@ suite "Discovery v5 Tests":
 
   test "Handshake cleanup: different ips":
     # Node to test the handshakes on.
-    let receiveNode = initDiscoveryNode(
-      rng, PrivateKey.example(rng), localAddress(20302))
+    let receiveNode =
+      initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20302))
 
     # Create random packets with same node ids but different ips
     # and "receive" them on receiveNode
     let
       privKey = PrivateKey.example(rng)
-      enrRec = SignedPeerRecord.init(1, privKey,
-        some(parseIpAddress("127.0.0.1")), some(Port(9000)),
-        some(Port(9000))).expect("Properly intialized private key")
+      enrRec = SignedPeerRecord
+        .init(
+          1,
+          privKey,
+          some(parseIpAddress("127.0.0.1")),
+          some(Port(9000)),
+          some(Port(9000)),
+        )
+        .expect("Properly intialized private key")
       sendNode = newNode(enrRec).expect("Properly initialized record")
     var codec = Codec(localNode: sendNode, privKey: privKey, sessions: Sessions.init(5))
     for i in 0 ..< 5:
       let a = localAddress(20303 + i)
-      let (packet, _, _) = encodeMessagePacket(rng[], codec,
-        receiveNode.localNode.id, receiveNode.localNode.address.get(), @[])
+      let (packet, _, _) = encodeMessagePacket(
+        rng[], codec, receiveNode.localNode.id, receiveNode.localNode.address.get(), @[]
+      )
       receiveNode.transport.receive(a, packet)
 
     # Checking different nodeIds but same address
@@ -684,24 +810,31 @@ suite "Discovery v5 Tests":
 
   test "Handshake duplicates":
     # Node to test the handshakes on.
-    let receiveNode = initDiscoveryNode(
-      rng, PrivateKey.example(rng), localAddress(20302))
+    let receiveNode =
+      initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20302))
 
     # Create random packets with same node ids and same ips
     # and "receive" them on receiveNode
     let
       a = localAddress(20303)
       privKey = PrivateKey.example(rng)
-      enrRec = SignedPeerRecord.init(1, privKey,
-        some(parseIpAddress("127.0.0.1")), some(Port(9000)),
-        some(Port(9000))).expect("Properly intialized private key")
+      enrRec = SignedPeerRecord
+        .init(
+          1,
+          privKey,
+          some(parseIpAddress("127.0.0.1")),
+          some(Port(9000)),
+          some(Port(9000)),
+        )
+        .expect("Properly intialized private key")
       sendNode = newNode(enrRec).expect("Properly initialized record")
     var codec = Codec(localNode: sendNode, privKey: privKey, sessions: Sessions.init(5))
 
     var firstRequestNonce: AESGCMNonce
     for i in 0 ..< 5:
-      let (packet, requestNonce, _) = encodeMessagePacket(rng[], codec,
-        receiveNode.localNode.id, receiveNode.localNode.address.get(), @[])
+      let (packet, requestNonce, _) = encodeMessagePacket(
+        rng[], codec, receiveNode.localNode.id, receiveNode.localNode.address.get(), @[]
+      )
       receiveNode.transport.receive(a, packet)
       if i == 0:
         firstRequestNonce = requestNonce
@@ -717,12 +850,10 @@ suite "Discovery v5 Tests":
 
   test "Talkreq no protocol":
     let
-      node1 = initDiscoveryNode(
-        rng, PrivateKey.example(rng), localAddress(20302))
-      node2 = initDiscoveryNode(
-        rng, PrivateKey.example(rng), localAddress(20303))
-      talkresp = await discv5_protocol.talkReq(node1, node2.localNode,
-        @[byte 0x01], @[])
+      node1 = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20302))
+      node2 = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20303))
+      talkresp =
+        await discv5_protocol.talkReq(node1, node2.localNode, @[byte 0x01], @[])
 
     check:
       talkresp.isOk()
@@ -733,21 +864,24 @@ suite "Discovery v5 Tests":
 
   test "Talkreq echo protocol":
     let
-      node1 = initDiscoveryNode(
-        rng, PrivateKey.example(rng), localAddress(20302))
-      node2 = initDiscoveryNode(
-        rng, PrivateKey.example(rng), localAddress(20303))
+      node1 = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20302))
+      node2 = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20303))
       talkProtocol = "echo".toBytes()
 
-    proc handler(protocol: TalkProtocol, request: seq[byte], fromId: NodeId, fromUdpAddress: Address): seq[byte]
-        {.gcsafe, raises: [Defect].} =
+    proc handler(
+        protocol: TalkProtocol,
+        request: seq[byte],
+        fromId: NodeId,
+        fromUdpAddress: Address,
+    ): seq[byte] {.gcsafe, raises: [Defect].} =
       request
 
     let echoProtocol = TalkProtocol(protocolHandler: handler)
 
     check node2.registerTalkProtocol(talkProtocol, echoProtocol).isOk()
-    let talkresp = await discv5_protocol.talkReq(node1, node2.localNode,
-      talkProtocol, "hello".toBytes())
+    let talkresp = await discv5_protocol.talkReq(
+      node1, node2.localNode, talkProtocol, "hello".toBytes()
+    )
 
     check:
       talkresp.isOk()
@@ -758,14 +892,16 @@ suite "Discovery v5 Tests":
 
   test "Talkreq register protocols":
     let
-      node1 = initDiscoveryNode(
-        rng, PrivateKey.example(rng), localAddress(20302))
-      node2 = initDiscoveryNode(
-        rng, PrivateKey.example(rng), localAddress(20303))
+      node1 = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20302))
+      node2 = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20303))
       talkProtocol = "echo".toBytes()
 
-    proc handler(protocol: TalkProtocol, request: seq[byte], fromId: NodeId, fromUdpAddress: Address): seq[byte]
-        {.gcsafe, raises: [Defect].} =
+    proc handler(
+        protocol: TalkProtocol,
+        request: seq[byte],
+        fromId: NodeId,
+        fromUdpAddress: Address,
+    ): seq[byte] {.gcsafe, raises: [Defect].} =
       request
 
     let echoProtocol = TalkProtocol(protocolHandler: handler)
