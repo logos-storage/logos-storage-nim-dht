@@ -8,12 +8,11 @@
 {.push raises: [].}
 
 import
-  std/hashes,
+  std/[hashes, net],
   bearssl/rand,
   chronicles,
   chronos,
   nimcrypto,
-  stew/shims/net,
   stint,
   ./crypto,
   ./spr
