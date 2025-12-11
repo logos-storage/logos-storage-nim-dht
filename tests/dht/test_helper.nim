@@ -1,4 +1,5 @@
 import
+  std/net,
   bearssl/rand,
   chronos,
   libp2p/crypto/[crypto, secp],

@@ -9,7 +9,6 @@ skipDirs      = @["tests"]
 # Dependencies
 requires "nim >= 2.2.4 & < 3.0.0"
 requires "secp256k1 >= 0.6.0 & < 0.7.0"
-requires "protobuf_serialization >= 0.3.0 & < 0.4.0"
 requires "nimcrypto >= 0.6.2 & < 0.8.0"
 requires "bearssl >= 0.2.5 & < 0.3.0"
 requires "chronicles >= 0.11.2 & < 0.13.0"
