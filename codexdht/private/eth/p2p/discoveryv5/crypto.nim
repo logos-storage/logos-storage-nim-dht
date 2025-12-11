@@ -4,11 +4,10 @@ import
   stew/[byteutils, objects, ptrops],
   results
 
-# from secp256k1 import ecdh, SkEcdhSecretSize, toRaw, SkSecretKey, SkPublicKey
 import secp256k1
 
 const
-  KeyLength* = SkEcdhSecretSize
+  KeyLength* = secp256k1.SkEcdhSecretSize
     ## Ecdh shared secret key length without leading byte
     ## (publicKey * privateKey).x, where length of x is 32 bytes
 
@@ -26,12 +25,12 @@ type
     data*: array[FullKeyLength, byte]
 
 proc fromHex*(T: type PrivateKey, data: string): Result[PrivateKey, cstring] =
-  let skKey = ? SkPrivateKey.init(data).mapErr(e =>
+  let skKey = ? secp.SkPrivateKey.init(data).mapErr(e =>
                 ("Failed to init private key from hex string: " & $e).cstring)
   ok PrivateKey.init(skKey)
 
 proc fromHex*(T: type PublicKey, data: string): Result[PublicKey, cstring] =
-  let skKey = ? SkPublicKey.init(data).mapErr(e =>
+  let skKey = ? secp.SkPublicKey.init(data).mapErr(e =>
                 ("Failed to init public key from hex string: " & $e).cstring)
   ok PublicKey.init(skKey)
 
@@ -46,14 +45,17 @@ proc ecdhSharedSecretHash(output: ptr byte, x32, y32: ptr byte, data: pointer): 
   ## Take the `x32` part as ecdh shared secret.
   ## output length is derived from x32 length and taken from ecdh
   ## generic parameter `KeyLength`
-  copyMem(output, x32, SkEcdhSecretSize)
+  copyMem(output, x32, KeyLength)
   return 1
 
 func ecdhSharedSecret(seckey: SkPrivateKey, pubkey: secp.SkPublicKey): SharedSecret =
   ## Compute ecdh agreed shared secret.
-  let res = ecdh[SkEcdhSecretSize](secp256k1.SkSecretKey(seckey),
-                                   secp256k1.SkPublicKey(pubkey),
-                                   ecdhSharedSecretHash, nil)
+  let res = secp256k1.ecdh[KeyLength](
+    secp256k1.SkSecretKey(seckey),
+    secp256k1.SkPublicKey(pubkey),
+    ecdhSharedSecretHash,
+    nil,
+  )
   # This function only fail if the hash function return zero.
   # Because our hash function always success, we can turn the error into defect
   doAssert res.isOk, $res.error
