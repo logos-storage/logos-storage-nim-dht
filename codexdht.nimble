@@ -19,7 +19,7 @@ requires "stew >= 0.4.2"
 requires "stint >= 0.8.1 & < 0.9.0"
 requires "https://github.com/codex-storage/nim-datastore >= 0.2.1 & < 0.3.0"
 requires "questionable >= 0.10.15 & < 0.11.0"
-requires "leveldbstatic >= 0.2.1 & < 0.3.0",
+requires "leveldbstatic >= 0.2.1 & < 0.3.0"
 
 task testAll, "Run all test suites":
   exec "nimble install -d -y"
