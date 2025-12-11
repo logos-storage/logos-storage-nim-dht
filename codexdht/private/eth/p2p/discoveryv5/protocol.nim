@@ -74,15 +74,15 @@
 {.push raises: [].}
 
 import
-  std/[tables, sets, options, math, sequtils, algorithm, strutils],
-  stew/shims/net as stewNet,
+  std/[net, tables, sets, options, math, sequtils, algorithm, strutils],
   json_serialization/std/net,
-  stew/[base64, endians2, results],
+  stew/[base64, endians2],
   pkg/[chronicles, chronicles/chronos_tools],
   pkg/chronos,
   pkg/stint,
   pkg/bearssl/rand,
-  pkg/metrics
+  pkg/metrics,
+  pkg/results
 
 import "."/[
   messages,

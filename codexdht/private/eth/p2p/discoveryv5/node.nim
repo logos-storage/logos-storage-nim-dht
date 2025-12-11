@@ -88,7 +88,9 @@ func newNode*(r: SignedPeerRecord): Result[Node, cstring] =
     nodeId = ? pk.get().toNodeId()
 
   if r.ip.isSome() and r.udp.isSome():
-    let a = Address(ip: ipv4(r.ip.get()), port: Port(r.udp.get()))
+    let a = Address(
+      ip: IpAddress(family: IPv4, address_v4: r.ip.get()), port: Port(r.udp.get())
+    )
 
     ok(Node(
       id: nodeId,

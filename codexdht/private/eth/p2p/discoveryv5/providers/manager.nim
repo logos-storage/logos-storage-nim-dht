@@ -14,7 +14,6 @@ import pkg/datastore
 import pkg/chronos
 import pkg/libp2p
 import pkg/chronicles
-import pkg/stew/results as rs
 import pkg/stew/byteutils
 import pkg/questionable
 import pkg/questionable/results

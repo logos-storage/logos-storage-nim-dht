@@ -1,8 +1,8 @@
 {.push raises: [].}
 
 import
-  std/[sets, options],
-  stew/results, stew/shims/net, chronicles, chronos,
+  std/[net, sets, options],
+  results, chronicles, chronos,
   "."/[node, spr, routing_table]
 
 logScope:

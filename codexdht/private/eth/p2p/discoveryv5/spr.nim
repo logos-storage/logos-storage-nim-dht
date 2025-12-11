@@ -6,10 +6,10 @@
 #
 import
   chronicles,
-  std/[options, strutils, sugar],
-  pkg/stew/[results, byteutils, arrayops],
+  results,
+  std/[net, options, strutils, sugar],
+  pkg/stew/[byteutils, arrayops],
   stew/endians2,
-  stew/shims/net,
   stew/base64,
   libp2p/crypto/crypto,
   libp2p/crypto/secp,
@@ -122,9 +122,13 @@ proc update*(
                                  .mapErr((e: string) => e.cstring)
       existingIp =
         if existingNetProtoFam == MultiCodec.codec("ip6"):
-          ipv6 array[16, byte].initCopyFrom(existingNetProtoAddr)
+          IpAddress(
+            family: IPv6, address_v6: array[16, byte].initCopyFrom(existingNetProtoAddr)
+          )
         else:
-          ipv4 array[4, byte].initCopyFrom(existingNetProtoAddr)
+          IpAddress(
+            family: IPv4, address_v4: array[4, byte].initCopyFrom(existingNetProtoAddr)
+          )
 
       ipAddr = ip.get(existingIp)
 

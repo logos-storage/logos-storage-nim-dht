@@ -1,7 +1,8 @@
 import
   std/sugar,
   libp2p/crypto/[crypto, secp],
-  stew/[byteutils, objects, results, ptrops]
+  stew/[byteutils, objects, ptrops],
+  results
 
 # from secp256k1 import ecdh, SkEcdhSecretSize, toRaw, SkSecretKey, SkPublicKey
 import secp256k1
