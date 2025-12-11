@@ -1,4 +1,5 @@
 import
+  std/net,
   bearssl/rand,
   chronos,
   libp2p/crypto/[crypto, secp],
@@ -7,7 +8,7 @@ import
   codexdht/discv5/protocol as discv5_protocol
 
 proc localAddress*(port: int): Address =
-  Address(ip: parseIpAddress("127.0.0.1"), port: Port(port))
+  Address(ip: IPv4_loopback(), port: Port(port))
 
 proc example*(T: type PrivateKey, rng: ref HmacDrbgContext): PrivateKey =
   PrivateKey.random(PKScheme.Secp256k1, rng[]).expect("Valid rng for private key")
@@ -101,13 +102,13 @@ proc addSeenNode*(d: discv5_protocol.Protocol, n: Node): bool =
   d.addNode(n)
 
 func udpExample*(_: type MultiAddress): MultiAddress =
-  ## creates a new udp multiaddress on a random port
-  Multiaddress.init("/ip4/0.0.0.0/udp/0")
+  ## creates a new udp MultiAddress on a random port
+  MultiAddress.init("/ip4/0.0.0.0/udp/0")
 
 func udpExamples*(_: type MultiAddress, count: int): seq[MultiAddress] =
   var res: seq[MultiAddress] = @[]
   for i in 1..count:
-    res.add Multiaddress.init("/ip4/0.0.0.0/udp/" & $i).get
+    res.add MultiAddress.init("/ip4/0.0.0.0/udp/" & $i).get
   return res
 
 proc toSignedPeerRecord*(privKey: PrivateKey) : SignedPeerRecord =

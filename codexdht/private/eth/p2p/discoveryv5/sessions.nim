@@ -19,8 +19,8 @@
 {.push raises: [].}
 
 import
-  std/options,
-  stint, stew/endians2, stew/shims/net,
+  std/[net, options],
+  stint, stew/endians2,
   node, lru
 
 export lru

@@ -18,13 +18,14 @@ import
   stew/endians2,
   bearssl/rand,
   chronicles,
-  stew/[results, byteutils],
+  stew/[byteutils],
   stint,
   libp2p/crypto/crypto as libp2p_crypto,
   libp2p/crypto/secp,
   libp2p/signed_envelope,
   metrics,
   nimcrypto,
+  results,
   "."/[messages, messages_encoding, node, spr, hkdf, sessions],
   "."/crypto
 
