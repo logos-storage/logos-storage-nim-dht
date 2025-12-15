@@ -17,7 +17,7 @@ requires "libp2p >= 1.14.1 & < 2.0.0"
 requires "metrics >= 0.1.0 & < 0.2.0"
 requires "stew >= 0.4.2"
 requires "stint >= 0.8.1 & < 0.9.0"
-requires "https://github.com/codex-storage/nim-datastore >= 0.2.1 & < 0.3.0"
+requires "https://github.com/logos-storage/nim-datastore >= 0.2.1 & < 0.3.0"
 requires "questionable >= 0.10.15 & < 0.11.0"
 requires "leveldbstatic >= 0.2.1 & < 0.3.0"
 

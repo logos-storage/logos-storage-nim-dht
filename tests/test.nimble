@@ -2,7 +2,7 @@
 
 version       = "0.4.0"
 author        = "Status Research & Development GmbH"
-description   = "Tests for Codex DHT"
+description   = "Tests for Logos Storage DHT"
 license       = "MIT"
 installFiles  = @["build.nims"]
 

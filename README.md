@@ -1,12 +1,12 @@
-# A DHT implementation for Codex
+# A DHT implementation for Logos Storage
 
 [![License: Apache](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Stability: experimental](https://img.shields.io/badge/stability-experimental-orange.svg)](#stability)
-[![CI (GitHub Actions)](https://github.com/codex-storage/nim-codex-dht/workflows/CI/badge.svg?branch=master)](https://github.com/codex-storage/nim-codex-dht/actions/workflows/ci.yml?query=workflow%3ACI+branch%3Amaster)
-[![codecov](https://codecov.io/gh/codex-storage/nim-codex-dht/branch/master/graph/badge.svg?token=tlmMJgU4l7)](https://codecov.io/gh/codex-storage/nim-codex-dht)
+[![CI (GitHub Actions)](https://github.com/logos-storage/logos-storage-nim-dht/workflows/CI/badge.svg?branch=master)](https://github.com/logos-storage/logos-storage-nim-dht/actions/workflows/ci.yml?query=workflow%3ACI+branch%3Amaster)
+[![codecov](https://codecov.io/gh/logos-storage/logos-storage-nim-dht/branch/master/graph/badge.svg?token=tlmMJgU4l7)](https://codecov.io/gh/logos-storage/logos-storage-nim-dht)
 
-This DHT implementation is aiming to provide a DHT for Codex with the following properties
+This DHT implementation is aiming to provide a DHT for Logos Storage with the following properties
 * flexible secure transport usage with
   * fast UDP based operation
   * eventual fallback to TCP-based operation (maybe though libp2p)
