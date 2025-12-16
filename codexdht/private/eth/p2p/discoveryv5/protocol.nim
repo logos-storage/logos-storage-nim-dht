@@ -136,7 +136,7 @@ const
   FindnodeSeenThreshold = 1.0 ## threshold used as findnode response filter
   LookupSeenThreshold = 0.0 ## threshold used for lookup nodeset selection
   QuerySeenThreshold = 0.0 ## threshold used for query nodeset selection
-  NoreplyRemoveThreshold = 0.5 ## remove node on no reply if 'seen' is below this value
+  NoreplyRemoveThreshold* = 0.5 ## remove node on no reply if 'seen' is below this value
 
 func shortLog*(record: SignedPeerRecord): string =
   ## Returns compact string representation of ``SignedPeerRecord``.
@@ -587,7 +587,7 @@ proc findNode*(d: Protocol, toNode: Node, distances: seq[uint16]):
     return ok(res)
   else:
     trace "findNode nodes not OK."
-    d.replaceNode(toNode)
+    d.replaceNode(toNode, NoreplyRemoveThreshold)
     return err(nodes.error)
 
 proc findNodeFast*(d: Protocol, toNode: Node, target: NodeId):
@@ -605,7 +605,7 @@ proc findNodeFast*(d: Protocol, toNode: Node, target: NodeId):
     let res = verifyNodesRecords(nodes.get(), toNode, FindNodeFastResultLimit)
     return ok(res)
   else:
-    d.replaceNode(toNode)
+    d.replaceNode(toNode, NoreplyRemoveThreshold)
     return err(nodes.error)
 
 
