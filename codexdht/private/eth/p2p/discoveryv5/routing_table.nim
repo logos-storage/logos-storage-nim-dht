@@ -524,10 +524,16 @@ proc len*(r: RoutingTable): int =
 proc moveRight[T](arr: var openArray[T], a, b: int) =
   ## In `arr` move elements in range [a, b] right by 1.
   var t: T
-  shallowCopy(t, arr[b + 1])
-  for i in countdown(b, a):
-    shallowCopy(arr[i + 1], arr[i])
-  shallowCopy(arr[a], t)
+  when declared(shallowCopy):
+    shallowCopy(t, arr[b + 1])
+    for i in countdown(b, a):
+      shallowCopy(arr[i + 1], arr[i])
+    shallowCopy(arr[a], t)
+  else:
+    t = move arr[b + 1]
+    for i in countdown(b, a):
+      arr[i + 1] = move arr[i]
+    arr[a] = move t
 
 proc setJustSeen*(r: RoutingTable, n: Node, seen = true) =
   ## If seen, move `n` to the head (most recently seen) of its bucket.
