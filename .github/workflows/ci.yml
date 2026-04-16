@@ -13,7 +13,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Install Nim
-        uses: iffy/install-nim@v4
+        uses: iffy/install-nim@v5
         with:
           version: ${{ matrix.nim }}
       - name: Build
