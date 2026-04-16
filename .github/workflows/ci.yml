@@ -12,10 +12,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - uses: jiro4989/setup-nim-action@v2
+      - name: Install Nim
+        uses: iffy/install-nim@v4
         with:
-          nim-version: ${{matrix.nim}}
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ matrix.nim }}
       - name: Build
         run: nimble install -y
       - name: Test
