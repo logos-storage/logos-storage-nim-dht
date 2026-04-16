@@ -19,7 +19,7 @@ jobs:
       - name: Install nimble
         uses: nim-lang/setup-nimble-action@v1
         with:
-          nimble-version: "0.18.2"
+          nimble-version: "0.20.0"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build
         run: nimble install -y
