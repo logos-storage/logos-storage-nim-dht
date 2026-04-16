@@ -139,32 +139,37 @@ proc get*(
 
     var keys: seq[Key]
     for item in cidIter:
-      # TODO: =? doesn't support tuples
-      if (maybeKey, val) =? (await item) and key =? maybeKey:
-        without pairs =? key.fromCidKey() and
-          provKey =? makeProviderKey(pairs.peerId), err:
-          trace "Error creating key from provider record", err = err.msg
-          continue
+      let res = await item
+      if res.isOk:
+        let (maybeKey, val) = res.value
+        if maybeKey.isSome:
+          let key = maybeKey.get()
+          without pairs =? key.fromCidKey() and
+            provKey =? makeProviderKey(pairs.peerId), err:
+            trace "Error creating key from provider record", err = err.msg
+            continue
 
-        trace "Querying provider key", key = provKey
-        without data =? (await self.store.get(provKey)):
-          trace "Error getting provider", key = provKey
-          keys.add(key)
-          continue
+          trace "Querying provider key", key = provKey
+          without data =? (await self.store.get(provKey)):
+            trace "Error getting provider", key = provKey
+            keys.add(key)
+            continue
 
-        without provider =? SignedPeerRecord.decode(data).mapErr(mapFailure), err:
-          trace "Unable to decode provider from store", err = err.msg
-          keys.add(key)
-          continue
+          without provider =? SignedPeerRecord.decode(data).mapErr(mapFailure), err:
+            trace "Unable to decode provider from store", err = err.msg
+            keys.add(key)
+            continue
 
-        trace "Retrieved provider with key", key = provKey
-        providers.add(provider)
-        self.cache.add(id, provider)
+          trace "Retrieved provider with key", key = provKey
+          providers.add(provider)
+          self.cache.add(id, provider)
 
     trace "Deleting keys without provider from store", len = keys.len
-    if keys.len > 0 and err =? (await self.store.delete(keys)).errorOption:
-      trace "Error deleting records from persistent store", err = err.msg
-      return failure err
+    if keys.len > 0:
+        let res = await self.store.delete(keys)
+        if res.isErr:
+          trace "Error deleting records from persistent store", err = res.error.msg
+          return failure res.error
 
     trace "Retrieved providers from persistent store", id = id, len = providers.len
   return success providers
@@ -202,8 +207,11 @@ proc contains*(self: ProvidersManager, id: NodeId): Future[bool] {.async.} =
         discard (await iter.dispose())
 
     for item in iter:
-      if (key, _) =? (await item) and key.isSome:
-        return true
+      let res = await item
+      if res.isOk:
+        let (key, _) = res.value
+        if key.isSome:
+          return true
 
   return false
 
@@ -230,19 +238,24 @@ proc remove*(self: ProvidersManager, id: NodeId): Future[?!void] {.async.} =
       keys: seq[Key]
 
     for item in iter:
-      if (maybeKey, _) =? (await item) and key =? maybeKey:
+      let res = await item
+      if res.isOk:
+        let (maybeKey, _) = res.value
+        if maybeKey.isSome:
+          let key = maybeKey.get()
+          keys.add(key)
+          without pairs =? key.fromCidKey, err:
+            trace "Unable to parse peer id from key", key
+            return failure err
 
-        keys.add(key)
-        without pairs =? key.fromCidKey, err:
-          trace "Unable to parse peer id from key", key
-          return failure err
+          self.cache.remove(id, pairs.peerId)
+          trace "Deleted record from store", key
 
-        self.cache.remove(id, pairs.peerId)
-        trace "Deleted record from store", key
-
-    if keys.len > 0 and err =? (await self.store.delete(keys)).errorOption:
-      trace "Error deleting record from persistent store", err = err.msg
-      return failure err
+    if keys.len > 0:
+      let res = await self.store.delete(keys)
+      if res.isErr:
+        trace "Error deleting record from persistent store", err = res.error()
+        return failure res.error()
 
   return success()
 
@@ -272,15 +285,21 @@ proc remove*(
         keys: seq[Key]
 
       for item in iter:
-        if (maybeKey, _) =? (await item) and key =? maybeKey:
-          keys.add(key)
+        let res = await item
+        if res.isOk:
+          let (maybeKey, _) = res.value
+          if maybeKey.isSome:
+            let key = maybeKey.get()
+            keys.add(key)
 
-          let
-            parts = key.id.split(datastore.Separator)
+            let
+              parts = key.id.split(datastore.Separator)
 
-      if keys.len > 0 and err =? (await self.store.delete(keys)).errorOption:
-        trace "Error deleting record from persistent store", err = err.msg
-        return failure err
+      if keys.len > 0:
+        let res = await self.store.delete(keys)
+        if res.isErr:
+          trace "Error deleting record from persistent store", err = res.error()
+          return failure res.error()
 
       trace "Deleted records from store"
 

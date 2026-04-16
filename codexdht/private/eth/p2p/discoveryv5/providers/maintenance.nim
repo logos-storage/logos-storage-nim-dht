@@ -50,19 +50,23 @@ proc cleanupExpired*(
       now = times.now().utc().toTime().toUnix()
 
     for item in iter:
-      if (maybeKey, data) =? (await item) and key =? maybeKey:
-        let
-          expired = endians2.fromBytesBE(uint64, data).int64
+      let res = await item
+      if res.isOk:
+        let (maybeKey, data) = res.value
+        if maybeKey.isSome:
+          let key = maybeKey.get()
+          let
+            expired = endians2.fromBytesBE(uint64, data).int64
 
-        if now >= expired:
-          trace "Found expired record", key
-          keys.add(key)
-          without pairs =? key.fromCidKey(), err:
-            trace "Error extracting parts from cid key", key
-            continue
+          if now >= expired:
+            trace "Found expired record", key
+            keys.add(key)
+            without pairs =? key.fromCidKey(), err:
+              trace "Error extracting parts from cid key", key
+              continue
 
-        if keys.len >= batchSize:
-          break
+          if keys.len >= batchSize:
+            break
 
     if err =? (await store.delete(keys)).errorOption:
       trace "Error cleaning up batch, records left intact!", size = keys.len, err = err.msg
@@ -93,37 +97,44 @@ proc cleanupOrphaned*(
         trace "Batch cleaned up", size = batchSize
 
       count.inc
-      if (maybeKey, _) =? (await item) and key =? maybeKey:
-        without peerId =? key.fromProvKey(), err:
-          trace "Error extracting parts from cid key", key
-          continue
+      let res = await item
+      if res.isOk:
+        let (maybeKey, _) = res.value
+        if maybeKey.isSome:
+          let key = maybeKey.get()
+          without peerId =? key.fromProvKey(), err:
+            trace "Error extracting parts from cid key", key
+            continue
 
-        without cidKey =? (CidKey / "*" / $peerId), err:
-          trace "Error building cid key", err = err.msg
-          continue
+          without cidKey =? (CidKey / "*" / $peerId), err:
+            trace "Error building cid key", err = err.msg
+            continue
 
-        without cidIter =? (await store.query(Query.init(cidKey, limit = 1, value = false))), err:
-          trace "Error querying key", cidKey, err = err.msg
-          continue
+          without cidIter =? (await store.query(Query.init(cidKey, limit = 1, value = false))), err:
+            trace "Error querying key", cidKey, err = err.msg
+            continue
 
-        let
-          res = block:
-            var count = 0
-            for item in cidIter:
-              if (key, _) =? (await item) and key.isSome:
-                count.inc
-            count
+          let
+            res = block:
+              var count = 0
+              for item in cidIter:
+                let res = await item
+                if res.isOk:
+                  let (key,_) = res.value
+                  if key.isSome:
+                    count.inc
+              count
 
-        if not isNil(cidIter):
-          trace "Disposing cid iter"
-          discard (await cidIter.dispose())
+          if not isNil(cidIter):
+            trace "Disposing cid iter"
+            discard (await cidIter.dispose())
 
-        if res > 0:
-          trace "Peer not orphaned, skipping", peerId
-          continue
+          if res > 0:
+            trace "Peer not orphaned, skipping", peerId
+            continue
 
-        if err =? (await store.delete(key)).errorOption:
-          trace "Error deleting orphaned peer", err = err.msg
-          continue
+          if err =? (await store.delete(key)).errorOption:
+            trace "Error deleting orphaned peer", err = err.msg
+            continue
 
-        trace "Cleaned up orphaned peer", peerId
+          trace "Cleaned up orphaned peer", peerId
