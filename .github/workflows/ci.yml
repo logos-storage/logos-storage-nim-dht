@@ -17,6 +17,6 @@ jobs:
           nim-version: ${{matrix.nim}}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build
-        run: nimble install -d -y --verbose 2>&1 | tee nimble-output.log || true
+        run: nimble install -d -y
       - name: Test
         run: nimble test -y
