@@ -18,11 +18,5 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build
         run: nimble install -d -y --verbose 2>&1 | tee nimble-output.log || true
-      - name: Upload nimble log
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: nimble-log-${{ matrix.os }}-${{ matrix.nim }}
-          path: nimble-output.log
       - name: Test
         run: nimble test -y
