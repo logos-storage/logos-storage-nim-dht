@@ -95,38 +95,38 @@ proc cleanupOrphaned*(
 
       count.inc
       let res = await item
-      if res.isOk:
-        let (maybeKey, _) = res.value
-        if maybeKey.isSome:
-          let key = maybeKey.get()
-          without peerId =? key.fromProvKey(), err:
-            trace "Error extracting parts from cid key", key
-            continue
+      if (maybeKey, _) =? res and key =? maybeKey:
+        without peerId =? key.fromProvKey(), err:
+          trace "Error extracting parts from cid key", key
+          continue
 
-          without cidKey =? (CidKey / "*" / $peerId), err:
-            trace "Error building cid key", err = err.msg
-            continue
+        without cidKey =? (CidKey / "*" / $peerId), err:
+          trace "Error building cid key", err = err.msg
+          continue
 
-          without cidIter =? (await store.query(Query.init(cidKey, limit = 1, value = false))), err:
-            trace "Error querying key", cidKey, err = err.msg
-            continue
+        without cidIter =? (await store.query(Query.init(cidKey, limit = 1, value = false))), err:
+          trace "Error querying key", cidKey, err = err.msg
+          continue
 
-          let
-            res = block:
-              var count = 0
-              for item in cidIter:
-                let res = await item
-                if res.isOk:
-                  let (key,_) = res.value
-                  if key.isSome:
-                    count.inc
-              count
+        let
+          res = block:
+            var count = 0
+            for item in cidIter:
+              if (key, _) =? (await item) and key.isSome:
+                count.inc
+            count
 
-          if not isNil(cidIter):
-            trace "Disposing cid iter"
-            discard (await cidIter.dispose())
+        if not isNil(cidIter):
+          trace "Disposing cid iter"
+          discard (await cidIter.dispose())
 
-          if res > 0:
+        if res > 0:
+          trace "Peer not orphaned, skipping", peerId
+          continue
+
+        if err =? (await store.delete(key)).errorOption:
+          trace "Error deleting orphaned peer", err = err.msg
+          continue
             trace "Peer not orphaned, skipping", peerId
             continue
 
