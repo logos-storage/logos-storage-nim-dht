@@ -50,23 +50,20 @@ proc cleanupExpired*(
       now = times.now().utc().toTime().toUnix()
 
     for item in iter:
-      let res = await item
-      if res.isOk:
-        let (maybeKey, data) = res.value
-        if maybeKey.isSome:
-          let key = maybeKey.get()
-          let
-            expired = endians2.fromBytesBE(uint64, data).int64
+      let itemRes = await item
+      if (maybeKey, data) =? itemRes and key =? maybeKey:
+        let
+          expired = endians2.fromBytesBE(uint64, data).int64
 
-          if now >= expired:
-            trace "Found expired record", key
-            keys.add(key)
-            without pairs =? key.fromCidKey(), err:
-              trace "Error extracting parts from cid key", key
-              continue
+        if now >= expired:
+          trace "Found expired record", key
+          keys.add(key)
+          without pairs =? key.fromCidKey(), err:
+            trace "Error extracting parts from cid key", key
+            continue
 
-          if keys.len >= batchSize:
-            break
+        if keys.len >= batchSize:
+          break
 
     if err =? (await store.delete(keys)).errorOption:
       trace "Error cleaning up batch, records left intact!", size = keys.len, err = err.msg
