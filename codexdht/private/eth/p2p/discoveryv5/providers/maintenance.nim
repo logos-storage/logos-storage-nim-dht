@@ -50,7 +50,8 @@ proc cleanupExpired*(
       now = times.now().utc().toTime().toUnix()
 
     for item in iter:
-      if (maybeKey, data) =? (await item) and key =? maybeKey:
+      let itemRes = await item
+      if (maybeKey, data) =? itemRes and key =? maybeKey:
         let
           expired = endians2.fromBytesBE(uint64, data).int64
 
@@ -93,7 +94,8 @@ proc cleanupOrphaned*(
         trace "Batch cleaned up", size = batchSize
 
       count.inc
-      if (maybeKey, _) =? (await item) and key =? maybeKey:
+      let res = await item
+      if (maybeKey, _) =? res and key =? maybeKey:
         without peerId =? key.fromProvKey(), err:
           trace "Error extracting parts from cid key", key
           continue

@@ -139,8 +139,8 @@ proc get*(
 
     var keys: seq[Key]
     for item in cidIter:
-      # TODO: =? doesn't support tuples
-      if (maybeKey, val) =? (await item) and key =? maybeKey:
+      let res = await item
+      if (maybeKey, val) =? res and key =? maybeKey:
         without pairs =? key.fromCidKey() and
           provKey =? makeProviderKey(pairs.peerId), err:
           trace "Error creating key from provider record", err = err.msg
@@ -202,7 +202,8 @@ proc contains*(self: ProvidersManager, id: NodeId): Future[bool] {.async.} =
         discard (await iter.dispose())
 
     for item in iter:
-      if (key, _) =? (await item) and key.isSome:
+      let res = await item
+      if (key, _) =? res and key.isSome:
         return true
 
   return false
@@ -230,8 +231,8 @@ proc remove*(self: ProvidersManager, id: NodeId): Future[?!void] {.async.} =
       keys: seq[Key]
 
     for item in iter:
-      if (maybeKey, _) =? (await item) and key =? maybeKey:
-
+      let res = await item
+      if (maybeKey, _) =? res and key =? maybeKey:
         keys.add(key)
         without pairs =? key.fromCidKey, err:
           trace "Unable to parse peer id from key", key
@@ -272,7 +273,8 @@ proc remove*(
         keys: seq[Key]
 
       for item in iter:
-        if (maybeKey, _) =? (await item) and key =? maybeKey:
+        let res = await item
+        if (maybeKey, _) =? res and key =? maybeKey:
           keys.add(key)
 
           let
