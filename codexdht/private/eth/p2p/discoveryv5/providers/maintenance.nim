@@ -127,11 +127,5 @@ proc cleanupOrphaned*(
         if err =? (await store.delete(key)).errorOption:
           trace "Error deleting orphaned peer", err = err.msg
           continue
-            trace "Peer not orphaned, skipping", peerId
-            continue
 
-          if err =? (await store.delete(key)).errorOption:
-            trace "Error deleting orphaned peer", err = err.msg
-            continue
-
-          trace "Cleaned up orphaned peer", peerId
+        trace "Cleaned up orphaned peer", peerId
