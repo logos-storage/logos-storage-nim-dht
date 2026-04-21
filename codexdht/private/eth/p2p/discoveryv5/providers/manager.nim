@@ -162,8 +162,7 @@ proc get*(
         self.cache.add(id, provider)
 
     trace "Deleting keys without provider from store", len = keys.len
-    if keys.len > 0:
-        if err =? (await self.store.delete(keys)).errorOption:
+    if keys.len > 0 and err =? (await self.store.delete(keys)).errorOption:
           trace "Error deleting records from persistent store", err = err.msg
           return failure err
 
@@ -242,8 +241,7 @@ proc remove*(self: ProvidersManager, id: NodeId): Future[?!void] {.async.} =
         self.cache.remove(id, pairs.peerId)
         trace "Deleted record from store", key
 
-    if keys.len > 0:
-      if err =? (await self.store.delete(keys)).errorOption:
+    if keys.len > 0 and err =? (await self.store.delete(keys)).errorOption:
         trace "Error deleting record from persistent store", err = err.msg
         return failure err
 
@@ -282,8 +280,7 @@ proc remove*(
           let
             parts = key.id.split(datastore.Separator)
 
-      if keys.len > 0:
-        if err =? (await self.store.delete(keys)).errorOption:
+      if keys.len > 0 and err =? (await self.store.delete(keys)).errorOption:
           trace "Error deleting record from persistent store", err = err.msg
           return failure err
 
