@@ -163,8 +163,8 @@ proc get*(
 
     trace "Deleting keys without provider from store", len = keys.len
     if keys.len > 0 and err =? (await self.store.delete(keys)).errorOption:
-          trace "Error deleting records from persistent store", err = err.msg
-          return failure err
+      trace "Error deleting records from persistent store", err = err.msg
+      return failure err
 
     trace "Retrieved providers from persistent store", id = id, len = providers.len
   return success providers
@@ -242,8 +242,8 @@ proc remove*(self: ProvidersManager, id: NodeId): Future[?!void] {.async.} =
         trace "Deleted record from store", key
 
     if keys.len > 0 and err =? (await self.store.delete(keys)).errorOption:
-        trace "Error deleting record from persistent store", err = err.msg
-        return failure err
+      trace "Error deleting record from persistent store", err = err.msg
+      return failure err
 
   return success()
 
@@ -281,8 +281,8 @@ proc remove*(
             parts = key.id.split(datastore.Separator)
 
       if keys.len > 0 and err =? (await self.store.delete(keys)).errorOption:
-          trace "Error deleting record from persistent store", err = err.msg
-          return failure err
+        trace "Error deleting record from persistent store", err = err.msg
+        return failure err
 
       trace "Deleted records from store"
 
