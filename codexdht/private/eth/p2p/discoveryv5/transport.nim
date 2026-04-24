@@ -236,7 +236,7 @@ proc receive*(t: Transport, a: Address, packet: openArray[byte]) =
             trace "Added new node to routing table after handshake", node, tablesize=t.client.nodesDiscovered()
           discard t.sendPending(node)
         else:
-          trace "address mismatch, not adding seen flag", node, address = a, nodeAddress = node.address.get()
+          trace "address mismatch, not adding seen flag", node, address = a, nodeAddress = node.address
   else:
     dht_transport_rx_packets.inc(labelValues = ["failed_decode"])
     dht_transport_rx_bytes.inc(packet.len.int64, labelValues = ["failed_decode"])
