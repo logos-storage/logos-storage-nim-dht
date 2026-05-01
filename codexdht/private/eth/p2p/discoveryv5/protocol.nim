@@ -735,7 +735,7 @@ proc addProvider*(
 
   var res = await d.lookup(cId)
   # TODO: lookup is specified as not returning local, even if that is the closest. Is this OK?
-  if res.len == 0 and not d.clientMode:
+  if res.len == 0:
       res.add(d.localNode)
   for toNode in res:
     if toNode != d.localNode:
