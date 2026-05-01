@@ -777,3 +777,36 @@ suite "Discovery v5 Tests":
 
     await node1.closeWait()
     await node2.closeWait()
+
+  test "Client mode: findNode(distance=0) returns empty":
+    # In client mode, the node should not advertise itself when asked for its
+    # own record (distance=0), so it does not appear in other nodes' routing tables.
+    let
+      clientNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20310))
+      serverNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20311))
+
+    clientNode.clientMode = true
+
+    let response = await discv5_protocol.findNode(serverNode, clientNode.localNode, @[0'u16])
+
+    check:
+      response.isOk()
+      response[].len == 0
+
+    await clientNode.closeWait()
+    await serverNode.closeWait()
+
+  test "Server mode: findNode(distance=0) returns own record":
+    let
+      node1 = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20312))
+      node2 = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20313))
+
+    let response = await discv5_protocol.findNode(node1, node2.localNode, @[0'u16])
+
+    check:
+      response.isOk()
+      response[].len == 1
+      response[][0].id == node2.localNode.id
+
+    await node1.closeWait()
+    await node2.closeWait()

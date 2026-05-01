@@ -180,6 +180,7 @@ type
     talkProtocols*: Table[seq[byte], TalkProtocol] # TODO: Table is a bit of
     rng*: ref HmacDrbgContext
     providers: ProvidersManager
+    clientMode*: bool
 
   TalkProtocolHandler* = proc(p: TalkProtocol, request: seq[byte], fromId: NodeId, fromUdpAddress: Address): seq[byte]
     {.gcsafe, raises: [Defect].}
@@ -340,10 +341,13 @@ proc handleFindNode(d: Protocol, fromId: NodeId, fromAddr: Address,
   if fn.distances.len == 0:
     d.sendNodes(fromId, fromAddr, reqId, [])
   elif fn.distances.contains(0):
-    # A request for our own record.
-    # It would be a weird request if there are more distances next to 0
-    # requested, so in this case lets just pass only our own. TODO: OK?
-    d.sendNodes(fromId, fromAddr, reqId, [d.localNode])
+    if d.clientMode:
+      d.sendNodes(fromId, fromAddr, reqId, [])
+    else:
+      # A request for our own record.
+      # It would be a weird request if there are more distances next to 0
+      # requested, so in this case lets just pass only our own. TODO: OK?
+      d.sendNodes(fromId, fromAddr, reqId, [d.localNode])
   else:
     # TODO: Still deduplicate also?
     if fn.distances.all(proc (x: uint16): bool = return x <= 256):
@@ -731,7 +735,7 @@ proc addProvider*(
 
   var res = await d.lookup(cId)
   # TODO: lookup is specified as not returning local, even if that is the closest. Is this OK?
-  if res.len == 0:
+  if res.len == 0 and not d.clientMode:
       res.add(d.localNode)
   for toNode in res:
     if toNode != d.localNode:
