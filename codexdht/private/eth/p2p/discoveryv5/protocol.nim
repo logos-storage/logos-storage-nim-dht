@@ -685,7 +685,11 @@ proc lookupWorker(d: Protocol, destNode: Node, target: NodeId, fast: bool):
     # Attempt to add all nodes discovered
     for n in result:
       if d.addNode(n):
-        d.trackedFutures.add(d.removeIfClientMode(n))
+        let fut = d.removeIfClientMode(n)
+        fut.addCallback(proc(data: pointer) =
+          d.trackedFutures.remove(fut)
+        )
+        d.trackedFutures.add(fut)
 
 proc lookup*(d: Protocol, target: NodeId, fast: bool = false): Future[seq[Node]] {.async.} =
   ## Perform a lookup for the given target, return the closest n nodes to the
@@ -971,9 +975,6 @@ proc populateTable*(d: Protocol) {.async.} =
     total = d.routingTable.len()
 
 proc revalidateNode*(d: Protocol, n: Node) {.async.} =
-  # Prune completed futures to avoid unbounded growth
-  d.trackedFutures.keepItIf(not it.finished)
-
   let pong = await d.ping(n)
 
   if pong.isOk():
@@ -1252,8 +1253,6 @@ proc closeWait*(d: Protocol) {.async.} =
   if not d.ipMajorityLoop.isNil:
     await d.ipMajorityLoop.cancelAndWait()
 
-  for fut in d.trackedFutures:
-    if not fut.finished:
-      await fut.cancelAndWait()
+  d.trackedFutures.cancelTracked()
 
   await d.transport.closeWait()

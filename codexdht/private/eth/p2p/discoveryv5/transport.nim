@@ -238,7 +238,10 @@ proc receive*(t: Transport, a: Address, packet: openArray[byte]) =
             # We keep adding the node in the line above in order to not break anything.
             # Then we remove the node if it using client mode.
             # The operation is async because the check is done over TalkProtocol.
-            t.client.trackedFutures.add(t.client.removeIfClientMode(node))
+            let fut = t.client.removeIfClientMode(node)
+            fut.addCallback(proc(data: pointer) =
+              t.client.trackedFutures.remove(fut))
+            t.client.trackedFutures.add(fut)
 
           discard t.sendPending(node)
         else:
