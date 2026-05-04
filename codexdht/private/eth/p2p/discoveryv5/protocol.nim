@@ -76,7 +76,7 @@
 import
   std/[net, tables, sets, options, math, sequtils, algorithm, strutils],
   json_serialization/std/net,
-  stew/[base64, endians2],
+  stew/[base64, byteutils, endians2],
   pkg/[chronicles, chronicles/chronos_tools],
   pkg/chronos,
   pkg/stint,
@@ -137,6 +137,7 @@ const
   LookupSeenThreshold = 0.0 ## threshold used for lookup nodeset selection
   QuerySeenThreshold = 0.0 ## threshold used for query nodeset selection
   NoreplyRemoveThreshold = 0.5 ## remove node on no reply if 'seen' is below this value
+  clientModeProtocolId* = toBytes("clientMode") ## Protocol ID for clientMode check over TalkProtocol
 
 func shortLog*(record: SignedPeerRecord): string =
   ## Returns compact string representation of ``SignedPeerRecord``.
@@ -181,6 +182,7 @@ type
     rng*: ref HmacDrbgContext
     providers: ProvidersManager
     clientMode*: bool
+    trackedFutures: seq[Future[bool]]
 
   TalkProtocolHandler* = proc(p: TalkProtocol, request: seq[byte], fromId: NodeId, fromUdpAddress: Address): seq[byte]
     {.gcsafe, raises: [Defect].}
@@ -341,13 +343,10 @@ proc handleFindNode(d: Protocol, fromId: NodeId, fromAddr: Address,
   if fn.distances.len == 0:
     d.sendNodes(fromId, fromAddr, reqId, [])
   elif fn.distances.contains(0):
-    if d.clientMode:
-      d.sendNodes(fromId, fromAddr, reqId, [])
-    else:
-      # A request for our own record.
-      # It would be a weird request if there are more distances next to 0
-      # requested, so in this case lets just pass only our own. TODO: OK?
-      d.sendNodes(fromId, fromAddr, reqId, [d.localNode])
+    # A request for our own record.
+    # It would be a weird request if there are more distances next to 0
+    # requested, so in this case lets just pass only our own. TODO: OK?
+    d.sendNodes(fromId, fromAddr, reqId, [d.localNode])
   else:
     # TODO: Still deduplicate also?
     if fn.distances.all(proc (x: uint16): bool = return x <= 256):
@@ -640,6 +639,22 @@ proc talkReq*(d: Protocol, toNode: Node, protocol, request: seq[byte]):
     dht_message_requests_outgoing.inc(labelValues = ["no_response"])
     return err("Talk response message not received in time")
 
+proc removeIfClientMode*(d: Protocol, node: Node): Future[bool] {.async.} =
+  ## Remove node from routing table if it responds as a client.
+  ## Returns true if the node was removed, false otherwise.
+  ## The TalkProtocol is used because it is a plug and use solution.
+  ## Another solution would be to include clientMode in the SPR,
+  ## but it would change every time the clientMode is updated
+  ## and it is not really compatible with mode changes because
+  ## it has to be propagated over the nodes.
+  ## Note that if the talk protocol fails (timeout or error),
+  ## the node is not removed in order to keep backward compatibility.
+  let resp = await d.talkReq(node, clientModeProtocolId, @[])
+  if resp.isOk() and resp.get() == @[byte 1]:
+    d.routingTable.removeNode(node)
+    return true
+  return false
+
 proc lookupDistances*(target, dest: NodeId): seq[uint16] =
   let td = logDistance(target, dest)
   let tdAsInt = int(td)
@@ -669,7 +684,8 @@ proc lookupWorker(d: Protocol, destNode: Node, target: NodeId, fast: bool):
 
     # Attempt to add all nodes discovered
     for n in result:
-      discard d.addNode(n)
+      if d.addNode(n):
+        d.trackedFutures.add(d.removeIfClientMode(n))
 
 proc lookup*(d: Protocol, target: NodeId, fast: bool = false): Future[seq[Node]] {.async.} =
   ## Perform a lookup for the given target, return the closest n nodes to the
@@ -955,15 +971,23 @@ proc populateTable*(d: Protocol) {.async.} =
     total = d.routingTable.len()
 
 proc revalidateNode*(d: Protocol, n: Node) {.async.} =
+  # Prune completed futures to avoid unbounded growth
+  d.trackedFutures.keepItIf(not it.finished)
+
   let pong = await d.ping(n)
 
   if pong.isOk():
+    if await d.removeIfClientMode(n):
+      debug "Removed client mode node from routing table", node = n
+      return
+
     let res = pong.get()
     if res.sprSeq > n.record.seqNum:
       # Request new SPR
       let nodes = await d.findNode(n, @[0'u16])
       if nodes.isOk() and nodes[].len > 0:
-        discard d.addNode(nodes[][0])
+        if d.addNode(nodes[][0]):
+          d.trackedFutures.add(d.removeIfClientMode(nodes[][0]))
 
     # Get IP and port from pong message and add it to the ip votes
     trace "pong rx", n, myip = res.ip, myport = res.port
@@ -1194,6 +1218,16 @@ proc open*(d: Protocol) {.raises: [Defect, CatchableError].} =
   d.transport.open()
   trace "Transport open."
 
+  let clientModeProtocol = TalkProtocol(
+    protocolHandler: proc(p: TalkProtocol, request: seq[byte], fromId: NodeId,
+        fromUdpAddress: Address): seq[byte] {.raises: [].} =
+      if d.clientMode:
+        @[byte 1]
+      else:
+        @[byte 0]
+  )
+  discard d.registerTalkProtocol(clientModeProtocolId, clientModeProtocol)
+
   d.seedTable()
   trace "Routing table seeded."
 
@@ -1216,5 +1250,9 @@ proc closeWait*(d: Protocol) {.async.} =
     await d.refreshLoop.cancelAndWait()
   if not d.ipMajorityLoop.isNil:
     await d.ipMajorityLoop.cancelAndWait()
+
+  for fut in d.trackedFutures:
+    if not fut.finished:
+      await fut.cancelAndWait()
 
   await d.transport.closeWait()

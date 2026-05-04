@@ -778,35 +778,73 @@ suite "Discovery v5 Tests":
     await node1.closeWait()
     await node2.closeWait()
 
-  test "Client mode: findNode(distance=0) returns empty":
-    # In client mode, the node should not advertise itself when asked for its
-    # own record (distance=0), so it does not appear in other nodes' routing tables.
+  test "Client mode is detected over TalkProtocol when clientMode is explicitly set to true":
     let
       clientNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20310))
       serverNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20311))
 
     clientNode.clientMode = true
 
-    let response = await discv5_protocol.findNode(serverNode, clientNode.localNode, @[0'u16])
+    let response = await discv5_protocol.talkReq(
+      serverNode, clientNode.localNode, clientModeProtocolId, @[])
 
     check:
       response.isOk()
-      response[].len == 0
+      response.get() == @[byte 1]
 
     await clientNode.closeWait()
     await serverNode.closeWait()
 
-  test "Server mode: findNode(distance=0) returns own record":
+  test "Client mode is not decteted when clientMode is not set":
     let
       node1 = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20312))
       node2 = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20313))
 
-    let response = await discv5_protocol.findNode(node1, node2.localNode, @[0'u16])
+    let response = await discv5_protocol.talkReq(
+      node1, node2.localNode, clientModeProtocolId, @[])
 
     check:
       response.isOk()
-      response[].len == 1
-      response[][0].id == node2.localNode.id
+      response.get() == @[byte 0]
 
     await node1.closeWait()
     await node2.closeWait()
+
+  test "Node is removed from routing table when clientMode is enabled":
+    let
+      clientNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20314))
+      serverNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20315))
+
+    clientNode.clientMode = true
+
+    # Trigger the handshake
+    discard await discv5_protocol.ping(clientNode, serverNode.localNode)
+
+    check serverNode.routingTable.len() == 1
+
+    # Wait for TalkProtocol response
+    await sleepAsync(300.milliseconds)
+
+    check serverNode.routingTable.len() == 0
+
+    await clientNode.closeWait()
+    await serverNode.closeWait()
+
+  test "Node is removed from routing table when clientMode is enabled during validation":
+    let
+      clientNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20316))
+      serverNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20317))
+
+    clientNode.clientMode = true
+
+    # Add client node directly to server routing table
+    check serverNode.addNode(clientNode.localNode)
+    
+    check serverNode.routingTable.len() == 1
+
+    await serverNode.revalidateNode(clientNode.localNode)
+
+    check serverNode.routingTable.len() == 0
+
+    await clientNode.closeWait()
+    await serverNode.closeWait()
