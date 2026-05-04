@@ -235,10 +235,10 @@ proc receive*(t: Transport, a: Address, packet: openArray[byte]) =
           if t.client.addNode(node):
             trace "Added new node to routing table after handshake", node, tablesize=t.client.nodesDiscovered()
 
-          # We keep adding the node in the line above in order to not break anything.
-          # Then we remove the node if it using client mode.
-          # The operation is async because the check is done over TalkProtocol.
-          t.client.trackedFutures.add(t.client.removeIfClientMode(node))
+            # We keep adding the node in the line above in order to not break anything.
+            # Then we remove the node if it using client mode.
+            # The operation is async because the check is done over TalkProtocol.
+            t.client.trackedFutures.add(t.client.removeIfClientMode(node))
 
           discard t.sendPending(node)
         else:

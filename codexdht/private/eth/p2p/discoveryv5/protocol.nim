@@ -986,8 +986,7 @@ proc revalidateNode*(d: Protocol, n: Node) {.async.} =
       # Request new SPR
       let nodes = await d.findNode(n, @[0'u16])
       if nodes.isOk() and nodes[].len > 0:
-        if d.addNode(nodes[][0]):
-          d.trackedFutures.add(d.removeIfClientMode(nodes[][0]))
+        discard d.addNode(nodes[][0])
 
     # Get IP and port from pong message and add it to the ip votes
     trace "pong rx", n, myip = res.ip, myport = res.port
