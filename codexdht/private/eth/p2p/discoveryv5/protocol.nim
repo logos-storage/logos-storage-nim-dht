@@ -1225,7 +1225,9 @@ proc open*(d: Protocol) {.raises: [Defect, CatchableError].} =
       else:
         @[byte 0]
   )
-  discard d.registerTalkProtocol(clientModeProtocolId, clientModeProtocol)
+  discard d.registerTalkProtocol(clientModeProtocolId, clientModeProtocol).expect(
+    "Only one protocol should have this id"
+  )
 
   d.seedTable()
   trace "Routing table seeded."
