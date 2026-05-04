@@ -1233,9 +1233,9 @@ proc open*(d: Protocol) {.raises: [Defect, CatchableError].} =
     protocolHandler: proc(p: TalkProtocol, request: seq[byte], fromId: NodeId,
         fromUdpAddress: Address): seq[byte] {.raises: [].} =
       if d.clientMode:
-        @[byte 1]
+        @[DhtMode.Client.byte]
       else:
-        @[byte 0]
+        @[DhtMode.Server.byte]
   )
   d.registerTalkProtocol(clientModeProtocolId, clientModeProtocol).expect(
     "Only one protocol should have this id"
