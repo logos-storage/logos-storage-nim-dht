@@ -240,8 +240,8 @@ proc receive*(t: Transport, a: Address, packet: openArray[byte]) =
             # The operation is async because the check is done over TalkProtocol.
             let fut = t.client.removeIfClientMode(node)
             fut.addCallback(proc(data: pointer) =
-              t.client.trackedFutures.remove(fut))
-            t.client.trackedFutures.add(fut)
+              t.client.trackedFutures.del(fut.id))
+            t.client.trackedFutures[fut.id] = fut
 
           discard t.sendPending(node)
         else:
