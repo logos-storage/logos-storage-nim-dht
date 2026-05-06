@@ -170,6 +170,30 @@ suite "Discovery v5.1 Protocol Message Encodings":
     let decoded = decodeMessage(hexToSeqByte(encodedPong))
     check decoded.isErr()
 
+  test "clientMode flag is correctly encoded and decoded":
+    let
+      p = PingMessage(sprSeq: 1'u64)
+      reqId = RequestId(id: @[1.byte])
+
+    let encodedClient = encodeMessage(p, reqId, clientMode = true)
+    let decodedClient = decodeMessage(encodedClient)
+    check decodedClient.isOk()
+    check decodedClient.get().clientMode == true
+
+    let encodedServer = encodeMessage(p, reqId, clientMode = false)
+    let decodedServer = decodeMessage(encodedServer)
+    check decodedServer.isOk()
+    check decodedServer.get().clientMode == false
+
+  test "Message without clientMode field decodes as server mode":
+    let
+      p = PingMessage(sprSeq: 1'u64)
+      reqId = RequestId(id: @[1.byte])
+      encoded = encodeMessage(p, reqId) # no clientMode field (legacy node)
+      decoded = decodeMessage(encoded)
+    check decoded.isOk()
+    check decoded.get().clientMode == false
+
 # According to test vectors:
 # https://github.com/ethereum/devp2p/blob/master/discv5/discv5-wire-test-vectors.md#cryptographic-primitives
 suite "Discovery v5.1 Cryptographic Primitives Test Vectors":

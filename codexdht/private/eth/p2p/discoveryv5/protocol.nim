@@ -76,7 +76,7 @@
 import
   std/[net, tables, sets, options, math, sequtils, algorithm, strutils],
   json_serialization/std/net,
-  stew/[base64, byteutils, endians2],
+  stew/[base64, endians2],
   pkg/[chronicles, chronicles/chronos_tools],
   pkg/chronos,
   pkg/stint,
@@ -137,15 +137,6 @@ const
   LookupSeenThreshold = 0.0 ## threshold used for lookup nodeset selection
   QuerySeenThreshold = 0.0 ## threshold used for query nodeset selection
   NoreplyRemoveThreshold = 0.5 ## remove node on no reply if 'seen' is below this value
-  clientModeProtocolId* = toBytes("clientMode") ## Protocol ID for clientMode check over TalkProtocol
-
-type DhtMode = enum
-  Server = 0.byte
-  Client = 1.byte
-
-func `==`(response: seq[byte], mode: DhtMode): bool =
-  response.len == 1 and response[0] == mode.byte
-
 func shortLog*(record: SignedPeerRecord): string =
   ## Returns compact string representation of ``SignedPeerRecord``.
   ##
@@ -189,7 +180,6 @@ type
     rng*: ref HmacDrbgContext
     providers: ProvidersManager
     clientMode*: bool
-    trackedFutures: Table[uint, Future[bool].Raising([CancelledError])]
 
   TalkProtocolHandler* = proc(p: TalkProtocol, request: seq[byte], fromId: NodeId, fromUdpAddress: Address): seq[byte]
     {.gcsafe, raises: [Defect].}
@@ -307,7 +297,7 @@ proc updateRecord*(
 proc sendResponse(d: Protocol, dstId: NodeId, dstAddr: Address,
     message: SomeMessage, reqId: RequestId) =
   ## send Response using the specifid reqId
-  d.transport.sendMessage(dstId, dstAddr, encodeMessage(message, reqId))
+  d.transport.sendMessage(dstId, dstAddr, encodeMessage(message, reqId, d.clientMode))
 
 proc sendNodes(d: Protocol, toId: NodeId, toAddr: Address, reqId: RequestId,
     nodes: openArray[Node]) =
@@ -455,6 +445,11 @@ proc handleMessage(d: Protocol, srcId: NodeId, fromAddr: Address,
       trace "Timed out or unrequested message", kind = message.kind,
         origin = fromAddr
 
+  if message.clientMode:
+    let node = d.routingTable.getNode(srcId)
+    if node.isSome:
+      d.routingTable.removeNode(node.get)
+
 proc registerTalkProtocol*(d: Protocol, protocolId: seq[byte],
     protocol: TalkProtocol): DiscResult[void] =
   # Currently allow only for one handler per talk protocol.
@@ -476,7 +471,7 @@ proc sendRequest*[T: SomeMessage](d: Protocol, toNode: Node, m: T,
     reqId: RequestId) =
   doAssert(toNode.address.isSome())
   let
-    message = encodeMessage(m, reqId)
+    message = encodeMessage(m, reqId, d.clientMode)
 
   trace "Send message packet", dstId = toNode.id,
     address = toNode.address, kind = messageKind(T)
@@ -646,26 +641,6 @@ proc talkReq*(d: Protocol, toNode: Node, protocol, request: seq[byte]):
     dht_message_requests_outgoing.inc(labelValues = ["no_response"])
     return err("Talk response message not received in time")
 
-proc removeIfClientMode*(d: Protocol, node: Node): Future[bool] {.async: (raises: [CancelledError]).} =
-  ## Remove node from routing table if it responds as a client.
-  ## Returns true if the node was removed, false otherwise.
-  ## The TalkProtocol is used because it is a plug and use solution.
-  ## Another solution would be to include clientMode in the SPR,
-  ## but it would change every time the clientMode is updated
-  ## and it is not really compatible with mode changes because
-  ## it has to be propagated over the nodes.
-  ## Note that if the talk protocol fails (timeout or error),
-  ## the node is not removed in order to keep backward compatibility.
-  try:
-    let resp = await d.talkReq(node, clientModeProtocolId, @[])
-    if resp.isOk() and resp.get() == DhtMode.Client:
-      d.routingTable.removeNode(node)
-      return true
-    return false
-  except CatchableError as e:
-    error "Failed to get the TalkProtocol response when checking the client mode", error = e.msg
-    return false
-
 proc lookupDistances*(target, dest: NodeId): seq[uint16] =
   let td = logDistance(target, dest)
   let tdAsInt = int(td)
@@ -695,12 +670,7 @@ proc lookupWorker(d: Protocol, destNode: Node, target: NodeId, fast: bool):
 
     # Attempt to add all nodes discovered
     for n in result:
-      if d.addNode(n):
-        let fut: Future[bool].Raising([CancelledError]) = d.removeIfClientMode(n)
-        fut.addCallback(proc(data: pointer) =
-          d.trackedFutures.del(fut.id)
-        )
-        d.trackedFutures[fut.id] = fut
+      discard d.addNode(n)
 
 proc lookup*(d: Protocol, target: NodeId, fast: bool = false): Future[seq[Node]] {.async.} =
   ## Perform a lookup for the given target, return the closest n nodes to the
@@ -989,10 +959,6 @@ proc revalidateNode*(d: Protocol, n: Node) {.async.} =
   let pong = await d.ping(n)
 
   if pong.isOk():
-    if await d.removeIfClientMode(n):
-      debug "Removed client mode node from routing table", node = n
-      return
-
     let res = pong.get()
     if res.sprSeq > n.record.seqNum:
       # Request new SPR
@@ -1229,18 +1195,6 @@ proc open*(d: Protocol) {.raises: [Defect, CatchableError].} =
   d.transport.open()
   trace "Transport open."
 
-  let clientModeProtocol = TalkProtocol(
-    protocolHandler: proc(p: TalkProtocol, request: seq[byte], fromId: NodeId,
-        fromUdpAddress: Address): seq[byte] {.raises: [].} =
-      if d.clientMode:
-        @[DhtMode.Client.byte]
-      else:
-        @[DhtMode.Server.byte]
-  )
-  d.registerTalkProtocol(clientModeProtocolId, clientModeProtocol).expect(
-    "Only one protocol should have this id"
-  )
-
   d.seedTable()
   trace "Routing table seeded."
 
@@ -1263,11 +1217,5 @@ proc closeWait*(d: Protocol) {.async.} =
     await d.refreshLoop.cancelAndWait()
   if not d.ipMajorityLoop.isNil:
     await d.ipMajorityLoop.cancelAndWait()
-
-  let cancellations = d.trackedFutures.values.toSeq.mapIt(it.cancelAndWait())
-  await noCancel allFutures cancellations
-  d.trackedFutures.clear()
-
-  d.talkProtocols.del(clientModeProtocolId)
 
   await d.transport.closeWait()

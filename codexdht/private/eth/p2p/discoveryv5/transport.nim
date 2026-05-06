@@ -232,16 +232,11 @@ proc receive*(t: Transport, a: Address, packet: openArray[byte]) =
           # sending the 'whoareyou' message to. In that case, we can set 'seen'
           # TODO: verify how this works with restrictive NAT and firewall scenarios.
           node.registerSeen()
-          if t.client.addNode(node):
-            trace "Added new node to routing table after handshake", node, tablesize=t.client.nodesDiscovered()
 
-            # We keep adding the node in the line above in order to not break anything.
-            # Then we remove the node if it using client mode.
-            # The operation is async because the check is done over TalkProtocol.
-            let fut = t.client.removeIfClientMode(node)
-            fut.addCallback(proc(data: pointer) =
-              t.client.trackedFutures.del(fut.id))
-            t.client.trackedFutures[fut.id] = fut
+          if packet.message.clientMode:
+            t.client.routingTable.removeNode(node)
+          else:
+            discard t.client.addNode(node)
 
           discard t.sendPending(node)
         else:
