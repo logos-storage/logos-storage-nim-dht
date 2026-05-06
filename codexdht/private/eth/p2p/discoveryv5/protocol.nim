@@ -449,6 +449,7 @@ proc handleMessage(d: Protocol, srcId: NodeId, fromAddr: Address,
     let node = d.routingTable.getNode(srcId)
     if node.isSome:
       d.routingTable.removeNode(node.get)
+      trace "Node removed from routing table after handling message", srcId
 
 proc registerTalkProtocol*(d: Protocol, protocolId: seq[byte],
     protocol: TalkProtocol): DiscResult[void] =
