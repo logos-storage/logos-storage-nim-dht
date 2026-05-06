@@ -189,7 +189,7 @@ suite "Discovery v5.1 Protocol Message Encodings":
     let
       p = PingMessage(sprSeq: 1'u64)
       reqId = RequestId(id: @[1.byte])
-      encoded = encodeMessage(p, reqId) # no clientMode field (legacy node)
+      encoded = encodeMessage(p, reqId)
       decoded = decodeMessage(encoded)
     check decoded.isOk()
     check decoded.get().clientMode == false

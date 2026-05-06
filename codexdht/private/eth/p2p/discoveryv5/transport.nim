@@ -236,7 +236,8 @@ proc receive*(t: Transport, a: Address, packet: openArray[byte]) =
           if packet.message.clientMode:
             t.client.routingTable.removeNode(node)
           else:
-            discard t.client.addNode(node)
+            if t.client.addNode(node):
+              trace "Added new node to routing table after handshake", node, tablesize=t.client.nodesDiscovered()
 
           discard t.sendPending(node)
         else:

@@ -790,7 +790,7 @@ suite "Discovery v5 Tests":
     await node1.closeWait()
     await node2.closeWait()
 
-  test "Node is removed from routing table when clientMode is enabled":
+  test "Node is not added to routing table when clientMode is enabled":
     let
       clientNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20314))
       serverNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20315))
@@ -809,14 +809,12 @@ suite "Discovery v5 Tests":
       node1 = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20318))
       node2 = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20319))
 
-    # Establish session: node1 is added to node2's routing table
     discard await discv5_protocol.ping(node1, node2.localNode)
+
     check node2.routingTable.len() == 1
 
-    # node1 switches to client mode
     node1.clientMode = true
 
-    # Second ping uses the existing session (ordinary message, not handshake)
     discard await discv5_protocol.ping(node1, node2.localNode)
 
     check node2.routingTable.len() == 0
@@ -824,12 +822,12 @@ suite "Discovery v5 Tests":
     await node1.closeWait()
     await node2.closeWait()
 
-  test "Node is removed from routing table when clientMode is enabled during validation":
+  test "Node is removed from routing table when clientMode is enabled during re-validation":
     let
       clientNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20316))
       serverNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20317))
 
-    # Add client node directly to server routing table
+    # Add client node directly to routing table
     check serverNode.addNode(clientNode.localNode)
     
     check serverNode.routingTable.len() == 1

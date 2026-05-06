@@ -361,7 +361,7 @@ proc decodeMessage*(body: openArray[byte]): DecodeResult[Message] =
   if pb.getField(3, clientModeField).isErr:
     return err("Invalid clientMode field")
 
-  message.clientMode = clientModeField != 0
+  message.clientMode = clientModeField == 1
 
   case kind
   of unused: return err("Invalid message type")
