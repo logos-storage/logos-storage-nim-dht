@@ -22,7 +22,7 @@ suite "Discovery v5.1 Protocol Message Encodings":
       reqId = RequestId(id: @[1.byte])
 
     let encoded = encodeMessage(p, reqId)
-    check byteutils.toHex(encoded) == "010a010112020801"
+    check byteutils.toHex(encoded) == "010a0101120208011800"
 
     let decoded = decodeMessage(encoded)
     check decoded.isOk()
@@ -42,7 +42,7 @@ suite "Discovery v5.1 Protocol Message Encodings":
       reqId = RequestId(id: @[1.byte])
 
     let encoded = encodeMessage(p, reqId)
-    check byteutils.toHex(encoded) == "020a01011211080112090a010112047f0000011a021388"
+    check byteutils.toHex(encoded) == "020a01011211080112090a010112047f0000011a0213881800"
 
     let decoded = decodeMessage(encoded)
     check decoded.isOk()
@@ -62,7 +62,7 @@ suite "Discovery v5.1 Protocol Message Encodings":
       reqId = RequestId(id: @[1.byte])
 
     let encoded = encodeMessage(fn, reqId)
-    check byteutils.toHex(encoded) == "030a010112040a020100"
+    check byteutils.toHex(encoded) == "030a010112040a0201001800"
 
     let decoded = decodeMessage(encoded)
     check decoded.isOk()
@@ -80,7 +80,7 @@ suite "Discovery v5.1 Protocol Message Encodings":
       reqId = RequestId(id: @[1.byte])
 
     let encoded = encodeMessage(n, reqId)
-    check byteutils.toHex(encoded) == "040a010112020801"
+    check byteutils.toHex(encoded) == "040a0101120208011800"
 
     let decoded = decodeMessage(encoded)
     check decoded.isOk()
@@ -102,7 +102,7 @@ suite "Discovery v5.1 Protocol Message Encodings":
       reqId = RequestId(id: @[1.byte])
 
     let encoded = encodeMessage(n, reqId)
-    check byteutils.toHex(encoded) == "040a0101129f03080112cc010a250802122102339d487ed237392d83791950dc891f0636de698c1fa051ea01ae3fa58bd78580120203011a560a2700250802122102339d487ed237392d83791950dc891f0636de698c1fa051ea01ae3fa58bd78580109cfd8992061a0b0a090400000000910200011a0b0a090400000000910200021a0b0a090400000000910200032a4730450221008cc77fd265e33c955174b9f49628048b2d72a6395acb30f0ba9d90536fa1a5d502207fa8e5bab8e8ddee9884a8e244b0990228e3546b5a9b6848632abd924796e57612cb010a2508021221026beda5cfddf1cd89130e7b5bb6092bac23db4a044bf847328aa0310dd123a445120203011a560a27002508021221026beda5cfddf1cd89130e7b5bb6092bac23db4a044bf847328aa0310dd123a445109cfd8992061a0b0a090400000000910200011a0b0a090400000000910200021a0b0a090400000000910200032a46304402203d41b1a78c5e6d98c9b4f3fcb213dc16ae4de50a1c8715ab29c516afe6488b4e02205841d09e92b3d2f1ad72c7bc066e561dab57320886f3fbbf272d2cf1732ca259"
+    check byteutils.toHex(encoded) == "040a0101129f03080112cc010a250802122102339d487ed237392d83791950dc891f0636de698c1fa051ea01ae3fa58bd78580120203011a560a2700250802122102339d487ed237392d83791950dc891f0636de698c1fa051ea01ae3fa58bd78580109cfd8992061a0b0a090400000000910200011a0b0a090400000000910200021a0b0a090400000000910200032a4730450221008cc77fd265e33c955174b9f49628048b2d72a6395acb30f0ba9d90536fa1a5d502207fa8e5bab8e8ddee9884a8e244b0990228e3546b5a9b6848632abd924796e57612cb010a2508021221026beda5cfddf1cd89130e7b5bb6092bac23db4a044bf847328aa0310dd123a445120203011a560a27002508021221026beda5cfddf1cd89130e7b5bb6092bac23db4a044bf847328aa0310dd123a445109cfd8992061a0b0a090400000000910200011a0b0a090400000000910200021a0b0a090400000000910200032a46304402203d41b1a78c5e6d98c9b4f3fcb213dc16ae4de50a1c8715ab29c516afe6488b4e02205841d09e92b3d2f1ad72c7bc066e561dab57320886f3fbbf272d2cf1732ca2591800"
 
     let decoded = decodeMessage(encoded)
     check decoded.isOk()
@@ -122,7 +122,7 @@ suite "Discovery v5.1 Protocol Message Encodings":
       reqId = RequestId(id: @[1.byte])
 
     let encoded = encodeMessage(tr, reqId)
-    check byteutils.toHex(encoded) == "050a0101120a0a046563686f12026869"
+    check byteutils.toHex(encoded) == "050a0101120a0a046563686f120268691800"
 
     let decoded = decodeMessage(encoded)
     check decoded.isOk()
@@ -140,7 +140,7 @@ suite "Discovery v5.1 Protocol Message Encodings":
       reqId = RequestId(id: @[1.byte])
 
     let encoded = encodeMessage(tr, reqId)
-    check byteutils.toHex(encoded) == "060a0101120412026869"
+    check byteutils.toHex(encoded) == "060a01011204120268691800"
 
     let decoded = decodeMessage(encoded)
     check decoded.isOk()
@@ -158,7 +158,7 @@ suite "Discovery v5.1 Protocol Message Encodings":
       # 1 byte too large
       reqId = RequestId(id: @[0.byte, 1, 2, 3, 4, 5, 6, 7, 8])
     let encoded = encodeMessage(p, reqId)
-    check byteutils.toHex(encoded) == "010a0900010203040506070812020801"
+    check byteutils.toHex(encoded) == "010a09000102030405060708120208011800"
 
     let decoded = decodeMessage(encoded)
     check decoded.isErr()
@@ -186,11 +186,8 @@ suite "Discovery v5.1 Protocol Message Encodings":
     check decodedServer.get().clientMode == false
 
   test "Message without clientMode field decodes as server mode":
-    let
-      p = PingMessage(sprSeq: 1'u64)
-      reqId = RequestId(id: @[1.byte])
-      encoded = encodeMessage(p, reqId)
-      decoded = decodeMessage(encoded)
+    # "010a010112020801" is a ping from a legacy node (clientMode field)
+    let decoded = decodeMessage(hexToSeqByte("010a010112020801"))
     check decoded.isOk()
     check decoded.get().clientMode == false
 

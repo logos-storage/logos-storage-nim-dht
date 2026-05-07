@@ -324,9 +324,7 @@ proc encodeMessage*[T: SomeMessage](p: T, reqId: RequestId, clientMode: bool = f
   var pb = initProtoBuffer()
   pb.write(1, reqId)
   pb.write(2, encoded)
-
-  if clientMode:
-    pb.write(3, 1'u64)
+  pb.write(3, clientMode.uint64)
 
   pb.finish()
   result.add(pb.buffer)
