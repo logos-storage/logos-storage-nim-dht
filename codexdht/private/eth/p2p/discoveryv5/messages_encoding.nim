@@ -324,7 +324,7 @@ proc encodeMessage*[T: SomeMessage](p: T, reqId: RequestId, clientMode: bool = f
   var pb = initProtoBuffer()
   pb.write(1, reqId)
   pb.write(2, encoded)
-  pb.write(3, clientMode.uint64)
+  pb.write(3, clientMode.uint32)
 
   pb.finish()
   result.add(pb.buffer)
@@ -346,7 +346,7 @@ proc decodeMessage*(body: openArray[byte]): DecodeResult[Message] =
   var
     reqId: RequestId
     encoded: EncodedMessage
-    clientModeField: uint64
+    clientModeField: uint32
 
   if pb.getRequiredField(1, reqId).isErr:
     return err("Invalid request-id")
