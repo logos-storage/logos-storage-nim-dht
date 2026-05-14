@@ -232,8 +232,14 @@ proc receive*(t: Transport, a: Address, packet: openArray[byte]) =
           # sending the 'whoareyou' message to. In that case, we can set 'seen'
           # TODO: verify how this works with restrictive NAT and firewall scenarios.
           node.registerSeen()
-          if t.client.addNode(node):
-            trace "Added new node to routing table after handshake", node, tablesize=t.client.nodesDiscovered()
+
+          if packet.message.clientMode:
+            t.client.routingTable.removeNode(node)
+            trace "Removed node from the routing table after handshake", node, tablesize=t.client.nodesDiscovered()
+          else:
+            if t.client.addNode(node):
+              trace "Added new node to routing table after handshake", node, tablesize=t.client.nodesDiscovered()
+
           discard t.sendPending(node)
         else:
           trace "address mismatch, not adding seen flag", node, address = a, nodeAddress = node.address

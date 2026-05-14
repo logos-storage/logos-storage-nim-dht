@@ -83,6 +83,7 @@ type
 
   Message* = object
     reqId*: RequestId
+    clientMode*: bool
     case kind*: MessageKind
     of ping:
       ping*: PingMessage

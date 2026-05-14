@@ -777,3 +777,66 @@ suite "Discovery v5 Tests":
 
     await node1.closeWait()
     await node2.closeWait()
+
+  test "Node is added to routing table when clientMode is not enabled":
+    let
+      node1 = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20310))
+      node2 = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20311))
+
+    discard await discv5_protocol.ping(node1, node2.localNode)
+
+    check node2.routingTable.len() == 1
+
+    await node1.closeWait()
+    await node2.closeWait()
+
+  test "Node is not added to routing table when clientMode is enabled":
+    let
+      clientNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20314))
+      serverNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20315))
+
+    clientNode.clientMode = true
+
+    discard await discv5_protocol.ping(clientNode, serverNode.localNode)
+
+    check serverNode.routingTable.len() == 0
+
+    await clientNode.closeWait()
+    await serverNode.closeWait()
+
+  test "Node is removed from routing table when clientMode is enabled after session is established":
+    let
+      node1 = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20318))
+      node2 = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20319))
+
+    discard await discv5_protocol.ping(node1, node2.localNode)
+
+    check node2.routingTable.len() == 1
+
+    node1.clientMode = true
+
+    discard await discv5_protocol.ping(node1, node2.localNode)
+
+    check node2.routingTable.len() == 0
+
+    await node1.closeWait()
+    await node2.closeWait()
+
+  test "Node is removed from routing table when clientMode is enabled during re-validation":
+    let
+      clientNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20316))
+      serverNode = initDiscoveryNode(rng, PrivateKey.example(rng), localAddress(20317))
+
+    # Add client node directly to routing table
+    check serverNode.addNode(clientNode.localNode)
+    
+    check serverNode.routingTable.len() == 1
+
+    clientNode.clientMode = true
+
+    await serverNode.revalidateNode(clientNode.localNode)
+
+    check serverNode.routingTable.len() == 0
+
+    await clientNode.closeWait()
+    await serverNode.closeWait()

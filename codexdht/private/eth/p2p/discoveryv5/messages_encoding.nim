@@ -312,7 +312,7 @@ proc encode*(msg: TalkRespMessage): seq[byte] =
   pb.finish()
   pb.buffer
 
-proc encodeMessage*[T: SomeMessage](p: T, reqId: RequestId): seq[byte] =
+proc encodeMessage*[T: SomeMessage](p: T, reqId: RequestId, clientMode: bool = false): seq[byte] =
   result = newSeqOfCap[byte](64)
   result.add(messageKind(T).ord)
 
@@ -324,6 +324,8 @@ proc encodeMessage*[T: SomeMessage](p: T, reqId: RequestId): seq[byte] =
   var pb = initProtoBuffer()
   pb.write(1, reqId)
   pb.write(2, encoded)
+  pb.write(3, clientMode.uint32)
+
   pb.finish()
   result.add(pb.buffer)
   trace "Encoded protobuf message", typ = $T
@@ -344,6 +346,7 @@ proc decodeMessage*(body: openArray[byte]): DecodeResult[Message] =
   var
     reqId: RequestId
     encoded: EncodedMessage
+    clientModeField: uint32
 
   if pb.getRequiredField(1, reqId).isErr:
     return err("Invalid request-id")
@@ -352,6 +355,11 @@ proc decodeMessage*(body: openArray[byte]): DecodeResult[Message] =
 
   if pb.getRequiredField(2, encoded).isErr:
     return err("Invalid message encoding")
+
+  if pb.getField(3, clientModeField).isErr:
+    return err("Invalid clientMode field")
+
+  message.clientMode = clientModeField == 1
 
   case kind
   of unused: return err("Invalid message type")

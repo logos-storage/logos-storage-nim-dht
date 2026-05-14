@@ -137,7 +137,6 @@ const
   LookupSeenThreshold = 0.0 ## threshold used for lookup nodeset selection
   QuerySeenThreshold = 0.0 ## threshold used for query nodeset selection
   NoreplyRemoveThreshold = 0.5 ## remove node on no reply if 'seen' is below this value
-
 func shortLog*(record: SignedPeerRecord): string =
   ## Returns compact string representation of ``SignedPeerRecord``.
   ##
@@ -180,6 +179,7 @@ type
     talkProtocols*: Table[seq[byte], TalkProtocol] # TODO: Table is a bit of
     rng*: ref HmacDrbgContext
     providers: ProvidersManager
+    clientMode*: bool
 
   TalkProtocolHandler* = proc(p: TalkProtocol, request: seq[byte], fromId: NodeId, fromUdpAddress: Address): seq[byte]
     {.gcsafe, raises: [Defect].}
@@ -297,7 +297,7 @@ proc updateRecord*(
 proc sendResponse(d: Protocol, dstId: NodeId, dstAddr: Address,
     message: SomeMessage, reqId: RequestId) =
   ## send Response using the specifid reqId
-  d.transport.sendMessage(dstId, dstAddr, encodeMessage(message, reqId))
+  d.transport.sendMessage(dstId, dstAddr, encodeMessage(message, reqId, d.clientMode))
 
 proc sendNodes(d: Protocol, toId: NodeId, toAddr: Address, reqId: RequestId,
     nodes: openArray[Node]) =
@@ -411,6 +411,13 @@ proc handleGetProviders(
 
 proc handleMessage(d: Protocol, srcId: NodeId, fromAddr: Address,
     message: Message) =
+
+  if message.clientMode:
+    let node = d.routingTable.getNode(srcId)
+    if node.isSome:
+      d.routingTable.removeNode(node.get)
+      trace "Node removed from routing table after handling message", srcId
+
   case message.kind
   of ping:
     dht_message_requests_incoming.inc()
@@ -466,7 +473,7 @@ proc sendRequest*[T: SomeMessage](d: Protocol, toNode: Node, m: T,
     reqId: RequestId) =
   doAssert(toNode.address.isSome())
   let
-    message = encodeMessage(m, reqId)
+    message = encodeMessage(m, reqId, d.clientMode)
 
   trace "Send message packet", dstId = toNode.id,
     address = toNode.address, kind = messageKind(T)
