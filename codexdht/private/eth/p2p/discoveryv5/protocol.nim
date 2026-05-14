@@ -411,6 +411,13 @@ proc handleGetProviders(
 
 proc handleMessage(d: Protocol, srcId: NodeId, fromAddr: Address,
     message: Message) =
+
+  if message.clientMode:
+    let node = d.routingTable.getNode(srcId)
+    if node.isSome:
+      d.routingTable.removeNode(node.get)
+      trace "Node removed from routing table after handling message", srcId
+
   case message.kind
   of ping:
     dht_message_requests_incoming.inc()
@@ -444,12 +451,6 @@ proc handleMessage(d: Protocol, srcId: NodeId, fromAddr: Address,
       dht_unsolicited_messages.inc()
       trace "Timed out or unrequested message", kind = message.kind,
         origin = fromAddr
-
-  if message.clientMode:
-    let node = d.routingTable.getNode(srcId)
-    if node.isSome:
-      d.routingTable.removeNode(node.get)
-      trace "Node removed from routing table after handling message", srcId
 
 proc registerTalkProtocol*(d: Protocol, protocolId: seq[byte],
     protocol: TalkProtocol): DiscResult[void] =
