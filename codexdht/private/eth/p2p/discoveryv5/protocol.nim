@@ -98,6 +98,8 @@ import "."/[
 
 import nimcrypto except toHex
 
+from libp2p/crypto/crypto import Rng
+
 export options, results, node, spr, providers
 
 declareCounter dht_message_requests_outgoing,
@@ -177,7 +179,7 @@ type
     ipVote: IpVote
     enrAutoUpdate: bool
     talkProtocols*: Table[seq[byte], TalkProtocol] # TODO: Table is a bit of
-    rng*: ref HmacDrbgContext
+    rng*: Rng
     providers: ProvidersManager
     clientMode*: bool
 
@@ -483,7 +485,7 @@ proc sendRequest*[T: SomeMessage](d: Protocol, toNode: Node, m: T,
 
 proc waitResponse*[T: SomeMessage](d: Protocol, node: Node, msg: T):
     Future[Option[Message]] =
-  let reqId = RequestId.init(d.rng[])
+  let reqId = RequestId.init(d.rng)
   result = d.waitMessage(node, reqId)
   sendRequest(d, node, msg, reqId)
 
@@ -500,7 +502,7 @@ proc waitMessage(d: Protocol, fromNode: Node, reqId: RequestId, timeout = Respon
 
 proc waitNodeResponses*[T: SomeMessage](d: Protocol, node: Node, msg: T):
     Future[DiscResult[seq[SignedPeerRecord]]] =
-  let reqId = RequestId.init(d.rng[])
+  let reqId = RequestId.init(d.rng)
   result = d.waitNodes(node, reqId)
   sendRequest(d, node, msg, reqId)
 
@@ -742,7 +744,7 @@ proc addProvider*(
       res.add(d.localNode)
   for toNode in res:
     if toNode != d.localNode:
-      let reqId = RequestId.init(d.rng[])
+      let reqId = RequestId.init(d.rng)
       d.sendRequest(toNode, AddProviderMessage(cId: cId, prov: pr), reqId)
     else:
       asyncSpawn d.addProviderLocal(cId, pr)
@@ -886,7 +888,7 @@ proc query*(d: Protocol, target: NodeId, k = BUCKET_SIZE): Future[seq[Node]]
 
 proc queryRandom*(d: Protocol): Future[seq[Node]] =
   ## Perform a query for a random target, return all nodes discovered.
-  d.query(NodeId.random(d.rng[]))
+  d.query(NodeId.random(d.rng))
 
 proc queryRandom*(d: Protocol, enrField: (string, seq[byte])):
     Future[seq[Node]] {.async.} =
@@ -978,7 +980,7 @@ proc revalidateLoop(d: Protocol) {.async.} =
   ## message.
   try:
     while true:
-      let revalidateTimeout = RevalidateMin + d.rng[].rand(RevalidateMax - RevalidateMin)
+      let revalidateTimeout = RevalidateMin + d.rng.rand(RevalidateMax - RevalidateMin)
       await sleepAsync(milliseconds(revalidateTimeout))
       let n = d.routingTable.nodeToRevalidate()
       if not n.isNil:

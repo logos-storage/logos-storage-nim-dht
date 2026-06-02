@@ -66,7 +66,7 @@ proc bootstrapNetwork(
 # suite "Providers Tests":
 suite "Providers Tests: node alone":
   var
-    rng: ref HmacDrbgContext
+    rng: Rng
     nodes: seq[(discv5_protocol.Protocol, PrivateKey)]
     targetId: NodeId
     node0: discv5_protocol.Protocol
@@ -125,7 +125,7 @@ suite "Providers Tests: node alone":
 suite "Providers Tests: two nodes":
 
   var
-    rng: ref HmacDrbgContext
+    rng: Rng
     nodes: seq[(discv5_protocol.Protocol, PrivateKey)]
     targetId: NodeId
     node0: discv5_protocol.Protocol
@@ -174,7 +174,7 @@ suite "Providers Tests: two nodes":
 suite "Providers Tests: 20 nodes":
 
   var
-    rng: ref HmacDrbgContext
+    rng: Rng
     nodes: seq[(discv5_protocol.Protocol, PrivateKey)]
     targetId: NodeId
     node0: discv5_protocol.Protocol

@@ -12,9 +12,8 @@ from std/times import now, utc, toTime, toUnix
 import pkg/stew/endians2
 import pkg/datastore
 import pkg/chronos
-import pkg/libp2p
+import pkg/libp2p/[peerid, routing_record]
 import pkg/chronicles
-import pkg/stew/byteutils
 import pkg/questionable
 import pkg/questionable/results
 
