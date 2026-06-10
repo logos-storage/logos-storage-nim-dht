@@ -3,7 +3,6 @@
 import
   std/[options, sequtils, tables],
   asynctest/chronos/unittest2,
-  bearssl/rand,
   chronos,
   libp2p/crypto/secp,
   codexdht/discv5/[messages, messages_encoding, encoding, spr, node, sessions],

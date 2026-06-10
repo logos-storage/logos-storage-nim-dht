@@ -10,9 +10,7 @@
 {.used.}
 
 import
-  std/[options],
   asynctest/chronos/unittest2,
-  bearssl/rand,
   chronicles,
   chronos,
   libp2p/crypto/[crypto, secp],

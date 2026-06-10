@@ -3,7 +3,7 @@
 import
   std/tables,
   chronos, chronicles, stint, asynctest/chronos/unittest, 
-  stew/byteutils, bearssl/rand,
+  stew/byteutils,
   libp2p/crypto/crypto,
   codexdht/discv5/[transport, spr, node, routing_table, encoding, sessions, nodes_verification],
   codexdht/discv5/crypto as dhtcrypto,
@@ -38,7 +38,6 @@ suite "Discovery v5 Tests":
 
   test "Node deletion":
     let
-      pkBootnode = PrivateKey.example(rng)
       bootnode = initDiscoveryNode(
         rng, PrivateKey.example(rng), localAddress(20301))
       node1 = initDiscoveryNode(
@@ -465,7 +464,7 @@ suite "Discovery v5 Tests":
 
     # Defect (for now?) on incorrect key use
     expect ResultDefect:
-      let incorrectKeyUpdates = newProtocol(PrivateKey.example(rng),
+      discard newProtocol(PrivateKey.example(rng),
         ip, some(port), some(port), bindPort = port, rng = rng,
         previousRecord = some(updatesNode.getRecord()))
 
@@ -740,7 +739,7 @@ suite "Discovery v5 Tests":
       talkProtocol = "echo".toBytes()
 
     proc handler(protocol: TalkProtocol, request: seq[byte], fromId: NodeId, fromUdpAddress: Address): seq[byte]
-        {.gcsafe, raises: [Defect].} =
+        {.gcsafe, raises: [].} =
       request
 
     let echoProtocol = TalkProtocol(protocolHandler: handler)
@@ -765,7 +764,7 @@ suite "Discovery v5 Tests":
       talkProtocol = "echo".toBytes()
 
     proc handler(protocol: TalkProtocol, request: seq[byte], fromId: NodeId, fromUdpAddress: Address): seq[byte]
-        {.gcsafe, raises: [Defect].} =
+        {.gcsafe, raises: [].} =
       request
 
     let echoProtocol = TalkProtocol(protocolHandler: handler)
