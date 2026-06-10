@@ -13,9 +13,7 @@ requires "nimcrypto >= 0.6.2 & < 0.8.0"
 requires "bearssl >= 0.2.5 & < 0.3.0"
 requires "chronicles >= 0.11.2 & < 0.13.0"
 requires "chronos >= 4.0.4 & < 4.4.0"
-# Pinned to this commit: logos-storage-nim needs the autonat fix it contains
-# (autonatv2 failed dial not reachable), only available on libp2p master.
-requires "libp2p#10caf815ee85b90acd88f81b6a0f4d093d718d40"
+requires "libp2p >= 2.0.0 & < 3.0.0"
 requires "protobuf_serialization >= 0.4.0"
 requires "metrics >= 0.1.0 & < 0.2.0"
 requires "stew >= 0.4.2"
